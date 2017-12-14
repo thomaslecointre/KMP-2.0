@@ -56,14 +56,21 @@ public class Console implements Runnable {
 
 	private Modes mode;
 	private Modes parentMode;
-
-	private void promptSymbol() {
-		System.out.print("\n> ");
+	private String promptMessage = "\n> ";
+	private void promptMessage() {
+		System.out.print(promptMessage);
+	}
+	private String illegalCommand = "\nIllegal command!";
+	private void illegalCommand() {
+		System.out.println(illegalCommand);
 	}
 
 	private boolean assignMode(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
+				if(mode == Modes.UNDO || mode == Modes.RESET) {
+					illegalCommand();
+				}
 				this.mode = mode;
 				mode.helpMessage();
 				return true;
@@ -101,60 +108,59 @@ public class Console implements Runnable {
 		System.out.println("\nUse 'back' to return to the main menu.");
 	}
 
-	private String nextLine(Modes currentMode) {
+	private String nextCommand(Modes currentMode) {
 		parentMode = currentMode;
-		boolean illegal, back;
+		boolean modeDetected, back;
 		String command;
 		do {
-			promptSymbol();
+			promptMessage();
 			command = scanner.nextLine();
-			illegal = true;
-			back = true;
+			modeDetected = false;
+			back = false;
 			for (Modes mode : Modes.values()) {
 				if (command.contains(mode.REPRESENTATION)) {
 					switch (mode) {
 					case INSERT:
 					case QUERY:
 					case SHOW:
-						System.out.println("\nIllegal command!");
-						illegal = true;
+						illegalCommand();
 						break;
 					case HELP:
 						currentMode.helpMessage();
 						break;
 					case BACK:
-						mode = Modes.BACK;
+						this.mode = Modes.BACK;
 						back = true;
 						command = null;
+						listOfCommands();
 						break;
 					case UNDO:
-						if(currentMode == Modes.INSERT) {
+						if (currentMode == Modes.INSERT) {
 							database.removeLastEntry();
 							System.out.println(database);
+							mode.helpMessage();
 						}
 						if (currentMode == Modes.QUERY) {
-							System.out.println("\nIllegal command!");
-							illegal = true;
+							illegalCommand();
 						}
 						break;
 					case RESET:
-						if (currentMode == Modes.QUERY) {
-							System.out.println("\nIllegal command!");
-							promptSymbol();
-							command = scanner.nextLine();
-							illegal = true;
-						}
-						if(currentMode == Modes.INSERT) {
+						if (currentMode == Modes.INSERT) {
 							database.reset();
 							System.out.println(database);
+							mode.helpMessage();
 						}
-						mode.helpMessage();
+						if (currentMode == Modes.QUERY) {
+							illegalCommand();
+						}
 						break;
 					}
+					modeDetected = true;
 					break;
-				}
+				} 
 			}
-		} while (illegal && !back && command == null);
+		} while ((!back || command != null) && modeDetected);
+		
 		return command;
 	}
 
@@ -163,13 +169,13 @@ public class Console implements Runnable {
 		System.out.println("----------------------------------------");
 		listOfCommands();
 		while (active) {
-			promptSymbol();
+			promptMessage();
 			processMode();
 			if (mode != null) {
 				switch (mode) {
 				case INSERT:
-					while(mode == Modes.INSERT) {
-						String insertion = nextLine(Modes.INSERT);
+					while (mode == Modes.INSERT) {
+						String insertion = nextCommand(Modes.INSERT);
 						if (insertion != null) {
 							database.insert(insertion);
 							System.out.println(database);
@@ -177,8 +183,8 @@ public class Console implements Runnable {
 					}
 					break;
 				case QUERY:
-					while(mode == Modes.QUERY) {
-						String query = nextLine(Modes.QUERY);
+					while (mode == Modes.QUERY) {
+						String query = nextCommand(Modes.QUERY);
 						if (query != null)
 							database.query(query);
 					}
@@ -190,9 +196,9 @@ public class Console implements Runnable {
 					active = false;
 				}
 			} else {
-				System.out.println("\nIllegal command!");
+				illegalCommand();
 			}
-
+			
 		}
 	}
 
