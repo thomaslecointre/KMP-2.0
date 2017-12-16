@@ -1,16 +1,17 @@
-package main;
+package ui;
+
+import persistence.TransactionHandler;
 
 import java.util.Scanner;
 
 public class Console implements Runnable {
 
 	private Scanner scanner;
-	private Database database;
-
+	private TransactionHandler transactionHandler;
 	private boolean active;
 
 	private enum Modes {
-		INSERT("insert"), QUERY("query"), HELP("help"), BACK("back"), UNDO("undo"), RESET("reset"), SHOW("show"), QUIT(
+		INSERT("insert"), QUERY("query"), HELP("help"), BACK("back"), UNDO ("undo"), RESET("reset"), SHOW("show"), QUIT(
 				"quit");
 
 		private final String REPRESENTATION;
@@ -23,12 +24,12 @@ public class Console implements Runnable {
 			switch (this) {
 			case INSERT:
 				System.out.println(
-						"\nEach word seperated by whitespace is considered as a seperate object in the database.");
-				System.out.println("Subjects are capitalized, relations aren't.");
+						"\nThe parity of a word's location matters. Odd indexed words are subjects. Even indexed words are entry headers.");
+				System.out.println("\nAn entry is comprised of a primary key, headers and values. A triple is a combination of the primary key, a header and its corresponding value.");
 				break;
 			case QUERY:
 				System.out.println(
-						"\nEach wildcard token (?X) seperated by whitespace is used to identify objects in the database.");
+						"\nEach wildcard token (?X) separated by whitespace is used to identify objects in the database.");
 				System.out.println("?X ?Y ?Z identifies all triples in the database.");
 				System.out.println("?X greaterThan ?Z identifies all triples that use greaterThan relation.");
 				System.out.println(
@@ -80,11 +81,11 @@ public class Console implements Runnable {
 	}
 
 	public Console() {
-		database = new Database();
 	}
 
 	@Override
 	public void run() {
+		transactionHandler = new TransactionHandler();
 		scanner = new Scanner(System.in);
 		active = true;
 		mode = Modes.INSERT;
@@ -122,7 +123,7 @@ public class Console implements Runnable {
 					switch (mode) {
 					case INSERT:
 					case QUERY:
-					case SHOW:
+						case SHOW:
 						illegalCommand();
 						break;
 					case HELP:
@@ -131,13 +132,12 @@ public class Console implements Runnable {
 					case BACK:
 						this.mode = Modes.BACK;
 						back = true;
-						command = null;
+						parentMode = null;
 						listOfCommands();
 						break;
 					case UNDO:
 						if (currentMode == Modes.INSERT) {
-							database.removeLastEntry();
-							System.out.println(database);
+							transactionHandler.requestUndo();
 							mode.helpMessage();
 						}
 						if (currentMode == Modes.QUERY) {
@@ -146,8 +146,7 @@ public class Console implements Runnable {
 						break;
 					case RESET:
 						if (currentMode == Modes.INSERT) {
-							database.reset();
-							System.out.println(database);
+							transactionHandler.requestReset();
 							mode.helpMessage();
 						}
 						if (currentMode == Modes.QUERY) {
@@ -155,11 +154,12 @@ public class Console implements Runnable {
 						}
 						break;
 					}
+					command = null;
 					modeDetected = true;
 					break;
 				} 
 			}
-		} while ((!back || command != null) && modeDetected);
+		} while (!back && modeDetected);
 		
 		return command;
 	}
@@ -177,23 +177,24 @@ public class Console implements Runnable {
 					while (mode == Modes.INSERT) {
 						String insertion = nextCommand(Modes.INSERT);
 						if (insertion != null) {
-							database.insert(insertion);
-							System.out.println(database);
+							transactionHandler.requestInsert(insertion);
 						}
 					}
 					break;
 				case QUERY:
 					while (mode == Modes.QUERY) {
 						String query = nextCommand(Modes.QUERY);
-						if (query != null)
-							database.query(query);
+						if (query != null) {
+							transactionHandler.requestQuery(query);
+						}
 					}
 					break;
 				case SHOW:
-					System.out.println(database);
+					transactionHandler.requestShow();
 					break;
 				case QUIT:
 					active = false;
+					break;
 				}
 			} else {
 				illegalCommand();
