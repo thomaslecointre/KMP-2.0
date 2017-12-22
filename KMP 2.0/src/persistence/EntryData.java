@@ -4,16 +4,18 @@ import model.ID;
 import model.Relation;
 import model.Subject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 
 public class EntryData {
-    private HashMap<Relation, Subject> relationMap;
+	private ID id;
+    private HashMap<Relation, HashSet<Subject>> relationMap;
 
-    public EntryData() {
+    protected EntryData() {
         relationMap = new HashMap<>();
-        relationMap.put(ID.singleton(), null);
     }
 
     public Set<Relation> keySet() {
@@ -21,19 +23,30 @@ public class EntryData {
     }
 
     public void put(Relation relation, Subject subject) {
-        relationMap.put(relation, subject);
+    	HashSet<Subject> subjects = relationMap.get(relation);
+    	if(subjects != null) {
+    		subjects.add(subject);
+    		relationMap.put(relation, subjects);
+    	} else {
+    		subjects = new HashSet<Subject>();
+    		subjects.add(subject);
+    		relationMap.put(relation, subjects);
+    	}
     }
 
     public void setID(Subject subject) {
-        relationMap.put(ID.singleton(), subject);
+    	if (id != null) {
+    		id.setSubject(subject);
+    	} else {
+    		id = new ID(subject);
+    	}
     }
 
     public String getIdAsString() {
-        String id = relationMap.get(ID.singleton()).getId();
-        return id;
+        return id.getSubject().getId();
     }
 
-    public Subject get(Relation relation) {
+    public HashSet<Subject> get(Relation relation) {
         return relationMap.get(relation);
     }
 }

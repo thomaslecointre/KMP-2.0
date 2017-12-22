@@ -1,9 +1,11 @@
 package persistence;
 
+import model.Data;
 import model.Relation;
 import model.Subject;
 
 import java.util.HashMap;
+import java.util.concurrent.locks.Condition;
 
 public class TransactionHandler {
 
@@ -79,8 +81,64 @@ public class TransactionHandler {
     // TODO
     public void requestQuery(String query) {
         String[] splitQuery = query.split(":");
-        String select = splitQuery[0];
-        String where = splitQuery[1];
+        
+        String selectStatement = splitQuery[0];
+        String[] selectorStrings = selectStatement.split(", ");
+        
+        class SpoofResult {
+        	int key;
+        	Data result;
+        	private SpoofResult() {
+        		
+        	}
+        }
+        
+        HashMap<String, Object> selectorMappings = new HashMap<String, Object>();
+        for(String selectorString : selectorStrings) {
+        	selectorMappings.put(selectorString, null);
+        }
+        
+        
+        
+        String whereStatement = splitQuery[1];
+        String[] conditionStatements = whereStatement.split("& ");
+        HashMap<String, Object> conditionMappings = new HashMap<String, Object>();
+        for(int conditionNumber = 0; conditionNumber < conditionStatements.length; conditionNumber++) {
+        	String[] conditionStrings = conditionStatements[conditionNumber].split(" ");
+        	
+        }
         HashMap<Character, Object> variableMappings = new HashMap<>();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,11 +1,12 @@
 package persistence;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
 import model.Data;
 import model.Relation;
 import model.Subject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 
 public class Database {
@@ -88,8 +89,20 @@ public class Database {
 		for(Integer key : table.keySet()) {
 			res.append("\nindex => ").append(key).append(" | ");
 			EntryData entryData = table.get(key);
+			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
 			for(Relation relation : entryData.keySet()) {
-				res.append(relation.getId()).append(" => ").append(entryData.get(relation).getId()).append(" | ");
+				res.append(relation.getId()).append(" => ");
+				HashSet<Subject> subjects = entryData.get(relation);
+				if(subjects.size() > 1) {
+					res.append("{ ");
+					for(Subject subject : subjects) {
+						res.append(subject.getId()).append(' ');
+					}
+					res.append("} | ");
+				} else if(subjects.size() == 1) {
+					res.append(subjects.toArray()[0]);
+					res.append(" | ");
+				}
 			}
 		}
 		return res.toString();

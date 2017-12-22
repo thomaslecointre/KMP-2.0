@@ -1,0 +1,11 @@
+In SPARQL-type language
+
+SELECT
+	?X, ?Y
+WHERE
+	?X is ?Z
+	?Z has 5
+	
+In KMP language:
+	
+	?X, ?Y : ?X is ?Z & ?Z has 5
