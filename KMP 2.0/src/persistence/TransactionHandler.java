@@ -4,6 +4,7 @@ import model.Data;
 import model.Relation;
 import model.Subject;
 
+import javax.swing.plaf.SplitPaneUI;
 import java.util.HashMap;
 import java.util.concurrent.locks.Condition;
 
@@ -85,26 +86,28 @@ public class TransactionHandler {
         String selectStatement = splitQuery[0];
         String[] selectorStrings = selectStatement.split(", ");
         
-        class SpoofResult {
-        	int key;
-        	Data result;
-        	private SpoofResult() {
-        		
-        	}
-        }
-        
-        HashMap<String, Object> selectorMappings = new HashMap<String, Object>();
+        HashMap<String, Object> selectorMappings = new HashMap<>();
         for(String selectorString : selectorStrings) {
         	selectorMappings.put(selectorString, null);
         }
-        
-        
+
         
         String whereStatement = splitQuery[1];
         String[] conditionStatements = whereStatement.split("& ");
-        HashMap<String, Object> conditionMappings = new HashMap<String, Object>();
-        for(int conditionNumber = 0; conditionNumber < conditionStatements.length; conditionNumber++) {
-        	String[] conditionStrings = conditionStatements[conditionNumber].split(" ");
+
+        class SpoofResult {
+            int key;
+            Data result;
+            SpoofResult(int key, Data result) {
+                this.key = key;
+                this.result = result;
+            }
+        }
+
+        HashMap<String, SpoofResult> conditionMappings = new HashMap<>();
+
+        for(String conditionStatement : conditionStatements) {
+        	String[] conditionStrings = conditionStatement.split(" ");
         	
         }
         HashMap<Character, Object> variableMappings = new HashMap<>();

@@ -100,7 +100,7 @@ public class Database {
 					}
 					res.append("} | ");
 				} else if(subjects.size() == 1) {
-					res.append(subjects.toArray()[0]);
+					res.append(((Subject)subjects.toArray()[0]).getId());
 					res.append(" | ");
 				}
 			}
