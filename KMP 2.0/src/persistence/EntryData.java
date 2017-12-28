@@ -4,10 +4,8 @@ import model.ID;
 import model.Relation;
 import model.Subject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 
 
 public class EntryData {
@@ -18,8 +16,12 @@ public class EntryData {
         relationMap = new HashMap<>();
     }
 
-    public Set<Relation> keySet() {
+    public Set<Relation> relations() {
         return relationMap.keySet();
+    }
+
+    public Collection<HashSet<Subject>> values() {
+        return relationMap.values();
     }
 
     public void put(Relation relation, Subject subject) {
@@ -48,5 +50,9 @@ public class EntryData {
 
     public HashSet<Subject> get(Relation relation) {
         return relationMap.get(relation);
+    }
+
+    public boolean containsKey(Relation relation) {
+        return relationMap.containsKey(relation);
     }
 }

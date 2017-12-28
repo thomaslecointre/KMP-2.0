@@ -1,8 +1,6 @@
 package persistence;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 import model.Data;
 import model.Relation;
@@ -16,7 +14,10 @@ public class Database {
 
 	private ArrayList<Data> objects;
 
-	
+	public int tableSize() {
+		return table.keySet().size();
+	}
+
 	public Database() {
 		table = new HashMap<>();
 		objects = new ArrayList<>();
@@ -72,7 +73,7 @@ public class Database {
 		return table.get(databaseEntryNumber);
 	}
 
-	public int queryKey(String id) {
+	public int findKey(String id) {
 		for(Integer key : table.keySet()) {
 			if(table.get(key).getIdAsString().equals(id)) {
 				return key;
@@ -90,7 +91,7 @@ public class Database {
 			res.append("\nindex => ").append(key).append(" | ");
 			EntryData entryData = table.get(key);
 			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
-			for(Relation relation : entryData.keySet()) {
+			for(Relation relation : entryData.relations()) {
 				res.append(relation.getId()).append(" => ");
 				HashSet<Subject> subjects = entryData.get(relation);
 				if(subjects.size() > 1) {
@@ -109,5 +110,25 @@ public class Database {
 	}
 
 
+	public Set<Integer> getAllKeys() {
+		return table.keySet();
+	}
 
+	public Collection<EntryData> getAllEntries() {
+	    return table.values();
+	}
+
+    public int relationCount() {
+	    int counter = 0;
+	    for(Data data : objects) {
+	        if (data instanceof Relation) {
+	            counter++;
+            }
+        }
+        return counter;
+    }
+
+    public boolean testKey(int key) {
+	    return table.keySet().contains(key);
+    }
 }
