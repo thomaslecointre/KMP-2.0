@@ -1,5 +1,8 @@
 package model;
 
+/**
+ * This class is used to represent the id associated with a database entry.
+ */
 public class ID {
 
 	private Subject subject;

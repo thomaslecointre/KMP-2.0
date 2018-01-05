@@ -5,6 +5,9 @@ import model.Subject;
 
 import java.util.*;
 
+/**
+ * This class is an intermediary request handling class and communicates with Database.
+ */
 public class TransactionHandler {
 
     private Database database;
@@ -13,17 +16,26 @@ public class TransactionHandler {
         database = new Database();
     }
 
+    /**
+     * Restores the database to its previous state.
+     */
+    // TODO
     public void requestUndo() {
-        database.removeLastEntry();
-        System.out.println("Previous entry removed.");
-        requestShow();
+
     }
 
+    /**
+     * Restores the database to its initial state.
+     */
     public void requestReset() {
         database.reset();
         requestShow();
     }
 
+    /**
+     * Handles an insertion request.
+     * @param insertion a string corresponding to a user entry.
+     */
     public void requestInsert(String insertion) {
         String[] splitInsertion = insertion.split(" ");
         String id = splitInsertion[0];
@@ -72,11 +84,16 @@ public class TransactionHandler {
         requestShow();
     }
 
+    /**
+     * Prints the database on standard output.
+     */
     public void requestShow() {
         System.out.println(database);
     }
 
-    // Class used to represent mappings for certain WHERE variables
+    /**
+     * Class used to represent mappings for certain WHERE variables.
+     */
     private class SpoofResult {
         int key;
         HashSet<Subject> subjects = new HashSet<>();
@@ -85,24 +102,29 @@ public class TransactionHandler {
             this.key = key;
         }
 
+        /**
+         * Adds an instance of Subject to the subjects field.
+         * @param subject an instance of Subject.
+         */
         void addSubject(Subject subject) {
             this.subjects.add(subject);
         }
 
+        /**
+         * Adds all instances of Subjects from the subjects parameter to the subjects field.
+         * @param subjects an set of subjects.
+         */
         void addSubjects(HashSet<Subject> subjects) {
             this.subjects.addAll(subjects);
         }
 
         @Override
         public boolean equals(Object object) {
-            if(!(object instanceof SpoofResult)) {
+            if (!(object instanceof SpoofResult)) {
                 return false;
             }
             SpoofResult spoofResult = (SpoofResult) object;
-            if(this == spoofResult) {
-                return true;
-            }
-            return this.key == spoofResult.key && this.subjects.equals(spoofResult.subjects);
+            return this == spoofResult || this.key == spoofResult.key && this.subjects.equals(spoofResult.subjects);
         }
     }
 
@@ -112,8 +134,7 @@ public class TransactionHandler {
      * Method used to process queries of all sorts defined by a loosely based SPARQL-like language.
      * The method splits the query into two at the beginning, the left side corresponding to the SELECT phase,
      * the right corresponding to the WHERE phase.
-     * @param query
-     *
+     * @param query a string corresponding to a user entry.
      */
     public void requestQuery(String query) {
         // Split the query into its SELECT phase and its WHERE phase
@@ -216,7 +237,7 @@ public class TransactionHandler {
                            SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
                            for(Relation relation : relations) {
                                if(entryData.containsKey(relation)) {
-                                   if(entryData.get(relation).equals(subject)) {
+                                   if(entryData.get(relation).contains(subject)) {
                                        spoofResultRight.addSubject(subject);
                                        spoofResultsRight.add(spoofResultRight);
                                        break;
@@ -230,7 +251,7 @@ public class TransactionHandler {
                             EntryData entryData = database.getEntryData(spoofResultLeft.key);
                             SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
                             if(entryData.containsKey(relation)) {
-                                if(entryData.get(relation).equals(subject)) {
+                                if(entryData.get(relation).contains(subject)) {
                                     spoofResultRight.addSubject(subject);
                                     spoofResultsRight.add(spoofResultRight);
                                     break;

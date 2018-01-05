@@ -4,12 +4,18 @@ import persistence.TransactionHandler;
 
 import java.util.Scanner;
 
+/**
+ * This class is the closest to the user. It interacts with TransactionHandler for requests.
+ */
 public class Console implements Runnable {
 
 	private Scanner scanner;
 	private TransactionHandler transactionHandler;
 	private boolean active;
 
+	/**
+	 * Enumeration of all types of commands the user can use.
+	 */
 	private enum Modes {
 		INSERT("insert"), QUERY("query"), HELP("help"), BACK("back"), UNDO ("undo"), RESET("reset"), SHOW("show"), QUIT(
 				"quit");
@@ -58,15 +64,29 @@ public class Console implements Runnable {
 	private Modes mode;
 	private Modes parentMode;
 	private String promptMessage = "\n> ";
+
+	/**
+	 * Prints out the prompt to the standard output.
+	 */
 	private void promptMessage() {
 		System.out.print(promptMessage);
 	}
+
 	private String illegalCommand = "\nIllegal command!";
+
+	/**
+	 * Prints out the illegal command message to the standard output.
+	 */
 	private void illegalCommand() {
 		System.out.println(illegalCommand);
 	}
 
-	private boolean assignMode(String command) {
+	/**
+	 * Checks for a valid mode change. When launching for the first time, UNDO and RESET are disabled.
+	 * @param command a string used to identify a command.
+	 * @return a boolean indicating that a command has been found.
+	 */
+	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
 				if(mode == Modes.UNDO || mode == Modes.RESET) {
@@ -93,14 +113,21 @@ public class Console implements Runnable {
 		scanner.close();
 	}
 
-	private void processMode() {
+	/**
+	 * Assigns the current parent mode.
+	 * The parent mode field is used to determine the correct function to call upon user entry.
+	 */
+	private void changeMode() {
 		String ingestedLine = scanner.nextLine();
-		Boolean modeChanged = assignMode(ingestedLine);
+		Boolean modeChanged = modeChanged(ingestedLine);
 		if (!modeChanged) {
 			mode = parentMode;
 		}
 	}
 
+	/**
+	 * Lists all user commands.
+	 */
 	private static void listOfCommands() {
 		System.out.println("Possible commands...\n");
 		for (Modes mode : Modes.values()) {
@@ -109,6 +136,11 @@ public class Console implements Runnable {
 		System.out.println("\nUse 'back' to return to the main menu.");
 	}
 
+	/**
+	 * Determines the correct function to call in TransactionHandler depending on the currentMode parameter.
+	 * @param currentMode a instance of the Modes enum.
+	 * @return a string corresponding to the user entry, used by TransactionHandler either as an insertion or a query.
+	 */
 	private String nextCommand(Modes currentMode) {
 		parentMode = currentMode;
 		boolean modeDetected, back;
@@ -164,13 +196,16 @@ public class Console implements Runnable {
 		return command;
 	}
 
+	/**
+	 * Top level user input handling function.
+	 */
 	private void prompt() {
 		System.out.println("Welcome to Knowledge Management Platform");
 		System.out.println("----------------------------------------");
 		listOfCommands();
 		while (active) {
 			promptMessage();
-			processMode();
+			changeMode();
 			if (mode != null) {
 				switch (mode) {
 				case INSERT:
