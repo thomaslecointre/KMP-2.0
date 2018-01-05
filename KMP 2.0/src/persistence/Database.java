@@ -143,7 +143,7 @@ public class Database {
 			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
 			for(Relation relation : entryData.relations()) {
 				res.append(relation.getId()).append(" => ");
-				HashSet<Subject> subjects = entryData.get(relation);
+				HashSet<Subject> subjects = entryData.getSubjects(relation);
 				if(subjects.size() > 1) {
 					res.append("{ ");
 					for(Subject subject : subjects) {

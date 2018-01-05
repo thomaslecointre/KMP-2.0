@@ -208,7 +208,7 @@ public class TransactionHandler {
                             SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
                             for(Relation relation : relations) {
                                 if(entryData.containsKey(relation)) {
-                                    spoofResultRight.addSubjects(entryData.get(relation));
+                                    spoofResultRight.addSubjects(entryData.getSubjects(relation));
                                 }
                             }
                             spoofResultsRight.add(spoofResultRight);
@@ -220,7 +220,7 @@ public class TransactionHandler {
                         for(SpoofResult spoofResultLeft : spoofResultsLeft) {
                             EntryData entryData = database.getEntryData(spoofResultLeft.key);
                             if (entryData != null) {
-                                HashSet<Subject> subjects = entryData.get(relation);
+                                HashSet<Subject> subjects = entryData.getSubjects(relation);
                                 SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
                                 spoofResultRight.addSubjects(subjects);
                                 spoofResultsRight.add(spoofResultRight);
@@ -237,7 +237,7 @@ public class TransactionHandler {
                            SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
                            for(Relation relation : relations) {
                                if(entryData.containsKey(relation)) {
-                                   if(entryData.get(relation).contains(subject)) {
+                                   if(entryData.getSubjects(relation).contains(subject)) {
                                        spoofResultRight.addSubject(subject);
                                        spoofResultsRight.add(spoofResultRight);
                                        break;
@@ -251,7 +251,7 @@ public class TransactionHandler {
                             EntryData entryData = database.getEntryData(spoofResultLeft.key);
                             SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
                             if(entryData.containsKey(relation)) {
-                                if(entryData.get(relation).contains(subject)) {
+                                if(entryData.getSubjects(relation).contains(subject)) {
                                     spoofResultRight.addSubject(subject);
                                     spoofResultsRight.add(spoofResultRight);
                                     break;
