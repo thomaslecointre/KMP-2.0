@@ -1,11 +1,5 @@
 package persistence;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -19,12 +13,8 @@ import model.Subject;
 /**
  * This class is the lowest data layer. It is the only class that should have access to data stored on a machine.
  */
-public class Database implements Serializable {
+public class Database {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	private ArrayList<Data> objects;
 	private HashMap<Integer, EntryData> table;
 	private int primaryIndex = 1;
@@ -212,49 +202,4 @@ public class Database implements Serializable {
 	public boolean testKey(int key) {
 	    return table.keySet().contains(key);
     }
-	
-	
-	
-	
-	
-	
-	
-	
-	public HashMap<Integer, EntryData> getTable() {
-		return table;
-	}
-
-	public int getPrimaryIndex() {
-		return primaryIndex;
-	}
-
-	public String createPath(String fileName) {
-		return System.getProperty("user.dir") + "/dataSerialized/" + fileName;
-	}
-	
-	public void writeObject(String fileName) throws IOException {
-		FileOutputStream fileOut = new FileOutputStream(createPath(fileName));
-		ObjectOutputStream out = new ObjectOutputStream(fileOut);
-		out.writeObject(this);
-		out.close();
-		fileOut.close();
-		System.out.printf("data serialized in /dataSerialized/" + fileName);
-	}
-	
-	public Database readObject(Database db, String fileName) throws IOException, ClassNotFoundException {
-		FileInputStream fileIn;
-		try {
-			fileIn = new FileInputStream(db.createPath(fileName));
-			ObjectInputStream in = new ObjectInputStream(fileIn);
-			db = (Database) in.readObject();
-			in.close();
-			fileIn.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		System.out.println("\ndata read from " + createPath(fileName));
-		return db;
-	}
 }
