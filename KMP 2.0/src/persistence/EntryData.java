@@ -30,7 +30,7 @@ public class EntryData {
      * Returns a collection of all sets of subjects from the relationMap field.
      * @return a collection of sets of subjects.
      */
-    public Collection<HashSet<Subject>> values() {
+    public Collection<HashSet<Subject>> subjects() {
         return relationMap.values();
     }
 
