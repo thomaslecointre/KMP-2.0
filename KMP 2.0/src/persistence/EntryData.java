@@ -77,7 +77,7 @@ public class EntryData {
      * @param relation an instance of Relation.
      * @return a boolean indicating the presence of relation.
      */
-    public boolean containsKey(Relation relation) {
+    public boolean containsRelation(Relation relation) {
         return relationMap.containsKey(relation);
     }
 }

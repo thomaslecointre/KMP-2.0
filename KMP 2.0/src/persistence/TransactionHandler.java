@@ -156,6 +156,7 @@ public class TransactionHandler {
 
 		// Prepare mappings for SELECT variables
 		HashMap<String, Object> selectorMappings = new HashMap<>();
+		
 		for (String selectorString : selectorStrings) {
 			selectorMappings.put(selectorString, null);
 		}
@@ -164,7 +165,8 @@ public class TransactionHandler {
 		// Split each WHERE substatement by '&'
 		String[] conditionStatements = whereStatement.split("& ");
 
-		HashMap<String, SpoofResult> conditionMappings = new HashMap<>();
+		HashMap<String, Object> conditionMappings = new HashMap<>();
+		
 		// Iterate through all the conditions of the WHERE statement
 		for (String conditionStatement : conditionStatements) {
 
@@ -172,29 +174,47 @@ public class TransactionHandler {
 
 			// Evaluating left side of the condition
 			String left = conditionStrings[0];
-			HashSet<SpoofResult> spoofResultsLeft = new HashSet<>();
-			if (left.charAt(0) == '?') {
-				Set<Integer> keys = database.getAllKeys();
-				for (Integer key : keys) {
-					spoofResultsLeft.add(new SpoofResult(key));
-				}
+			
+			HashSet<SpoofResult> spoofResultsLeft;
+			
+			if (conditionMappings.containsKey(left)) {
+				spoofResultsLeft = (HashSet<SpoofResult>) conditionMappings.get(left);
 			} else {
-				// Test if left is an id or an int value (key)
-				int key = 0;
-				try {
-					key = Integer.parseInt(left);
-				} catch (NumberFormatException e) {
-					key = database.findKey(left);
-				} finally {
-					if (key != 0) {
+				spoofResultsLeft = new HashSet<>();
+			}
+			
+			if (spoofResultsLeft.isEmpty()) {
+				if (left.charAt(0) == '?') {
+					Set<Integer> keys = database.getAllKeys();
+					for (Integer key : keys) {
 						spoofResultsLeft.add(new SpoofResult(key));
+					}
+				} else {
+					// Test if left is an id or an int value (key)
+					int key = 0;
+					try {
+						key = Integer.parseInt(left);
+					} catch (NumberFormatException e) {
+						key = database.findKey(left);
+					} finally {
+						if (key != 0) {
+							spoofResultsLeft.add(new SpoofResult(key));
+						}
 					}
 				}
 			}
-
+			
 			// Evaluating the middle of the condition (relation)
 			String middle = conditionStrings[1];
-			HashSet<Relation> relations = new HashSet<>();
+			
+			HashSet<Relation> relations;
+			
+			if (conditionMappings.containsKey(middle)) {
+				relations = (HashSet<Relation>) conditionMappings.get(middle);
+			} else {
+				relations = new HashSet<>();
+			}
+			
 			if (middle.charAt(0) == '?') {
 				for (SpoofResult spoofResultLeft : spoofResultsLeft) {
 					EntryData entryData = database.getEntryData(spoofResultLeft.key);
@@ -210,7 +230,7 @@ public class TransactionHandler {
 				HashSet<SpoofResult> spoofResultsLeftMarkedForRemoval = (HashSet<SpoofResult>) spoofResultsLeft.clone();
 				for (SpoofResult spoofResultLeft : spoofResultsLeft) {
 					EntryData entryDataLeft = database.getEntryData(spoofResultLeft.key);
-					if (!entryDataLeft.containsKey(relation)) {
+					if (!entryDataLeft.containsRelation(relation)) {
 						spoofResultsLeftMarkedForRemoval.remove(spoofResultLeft);
 					}
 				}
@@ -219,14 +239,21 @@ public class TransactionHandler {
 
 			// Evaluating the right side of the condition
 			String right = conditionStrings[2];
-			HashSet<SpoofResult> spoofResultsRight = new HashSet<>();
+			
+			HashSet<SpoofResult> spoofResultsRight;
+			if (conditionMappings.containsKey(right)) {
+				spoofResultsRight = (HashSet<SpoofResult>) conditionMappings.get(right);
+			} else {
+				spoofResultsRight = new HashSet<>();
+			}
+			
 			if (right.charAt(0) == '?') {
 				if (middle.charAt(0) == '?') {
 					for (SpoofResult spoofResultLeft : spoofResultsLeft) {
 						EntryData entryData = database.getEntryData(spoofResultLeft.key);
 						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
 						for (Relation relation : relations) {
-							if (entryData.containsKey(relation)) {
+							if (entryData.containsRelation(relation)) {
 								spoofResultRight.addSubjects(entryData.getSubjects(relation));
 							}
 						}
@@ -255,7 +282,7 @@ public class TransactionHandler {
 						for (SpoofResult spoofResultLeft : spoofResultsLeft) {
 							EntryData entryData = database.getEntryData(spoofResultLeft.key);
 							SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
-							if (entryData.containsKey(relation)) {
+							if (entryData.containsRelation(relation)) {
 								if (entryData.getSubjects(relation).contains(subject)) {
 									spoofResultRight.addSubject(subject);
 									spoofResultsRight.add(spoofResultRight);
@@ -270,14 +297,14 @@ public class TransactionHandler {
 							relationsMarkedForRemoval.remove(relation);
 						}
 					}
-
+					
 				} else {
 					Relation relation = relations.iterator().next();
 					boolean relationStillValid = false;
 					for (SpoofResult spoofResultLeft : spoofResultsLeft) {
 						EntryData entryData = database.getEntryData(spoofResultLeft.key);
 						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
-						if (entryData.containsKey(relation)) {
+						if (entryData.containsRelation(relation)) {
 							if (entryData.getSubjects(relation).contains(subject)) {
 								spoofResultRight.addSubject(subject);
 								spoofResultsRight.add(spoofResultRight);
@@ -295,6 +322,24 @@ public class TransactionHandler {
 				spoofResultsLeft = spoofResultsLeftMarkedForRemoval;
 				relations = relationsMarkedForRemoval;
 			}
+			
+			// Add the results to conditionMappings
+			if (left.charAt(0) == '?') {
+				conditionMappings.put(left, spoofResultsLeft);
+			}
+			if (middle.charAt(0) == '?') {
+				conditionMappings.put(middle, relations);
+			}
+			if (right.charAt(0) == '?') {
+				conditionMappings.put(right, spoofResultsRight);
+			}
+			
+			// Clean previous mappings
+			
 		}
+	}
+	
+	private void cleanMappings() {
+		
 	}
 }
