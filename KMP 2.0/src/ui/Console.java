@@ -185,6 +185,9 @@ public class Console implements Runnable {
 							illegalCommand();
 						}
 						break;
+					case QUIT:
+						illegalCommand();
+						break;
 					}
 					command = null;
 					modeDetected = true;

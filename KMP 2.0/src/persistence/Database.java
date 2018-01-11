@@ -59,7 +59,7 @@ public class Database {
 	 */
 	public void reset() {
 		table.clear();
-		primaryIndex = 0;
+		primaryIndex = 1;
 	}
 
 	/**
