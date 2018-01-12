@@ -1,8 +1,9 @@
 package ui;
 
-import persistence.TransactionHandler;
-
 import java.util.Scanner;
+
+import persistence.TransactionHandler;
+import query.Result;
 
 /**
  * This class is the closest to the user. It interacts with TransactionHandler for requests.
@@ -34,12 +35,10 @@ public class Console implements Runnable {
 				System.out.println("\nAn entry is comprised of a primary key, headers and values. A triple is a combination of the primary key, a header and its corresponding value.");
 				break;
 			case QUERY:
-				System.out.println(
-						"\nEach wildcard token (?X) separated by whitespace is used to identify objects in the database.");
-				System.out.println("?X ?Y ?Z identifies all triples in the database.");
-				System.out.println("?X greaterThan ?Z identifies all triples that use greaterThan relation.");
-				System.out.println(
-						"2 ?Y 1 identifies all triples that establish a relation between 2 and 1, such as '2 greaterThan 1'");
+				System.out.println("\nThe query engine uses a SPARQL inspired syntax and requires the user to input queries in the following format:");
+				System.out.println("\n?X, ?Y : ?X is ?Z & ?Z has 5");
+				System.out.println("\nAll variables prefixed by '?' located before the colon are those that will be displayed.");
+				System.out.println("\nEverything written after the colon equates to the WHERE block in a SPARQL query. Each line is seperated by the '&' character.");
 				break;
 			case HELP:
 				listOfCommands();
@@ -103,8 +102,8 @@ public class Console implements Runnable {
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
-				if(mode == Modes.UNDO || mode == Modes.RESET) {
-					illegalCommand();
+				if(mode == Modes.UNDO || mode == Modes.RESET || mode == Modes.BACK) {
+					return false;
 				}
 				this.mode = mode;
 				mode.helpMessage();
@@ -241,7 +240,8 @@ public class Console implements Runnable {
 					while (mode == Modes.QUERY) {
 						String query = nextCommand(Modes.QUERY);
 						if (query != null) {
-							transactionHandler.requestQuery(query);
+							Result result = transactionHandler.requestQuery(query);
+							System.out.println(result);
 						} else {
 							resetPromptMessage();
 						}

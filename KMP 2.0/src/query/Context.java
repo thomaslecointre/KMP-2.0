@@ -10,38 +10,17 @@ public class Context {
 	private HashMap<String, Object> contextVariables = new HashMap();
 	
 	public boolean containsKey(String identifier) {
-		for (String variable : contextVariables.keySet()) {
-			if (variable.equals(identifier)) {
-				return true;
-			}
-		}
-		return false;
+		return contextVariables.containsKey(identifier);
 	}
 
 	public HashSet<Relation> getRelations(String identifier) {
-		for (String variable : contextVariables.keySet()) {
-			if (variable.equals(identifier)) {
-				return (HashSet<Relation>) contextVariables.get(variable);
-			}
-		}
-		return null;
+		return (HashSet<Relation>) contextVariables.get(identifier);
 	}
 
 	public HashSet<SpoofResult> getSpoofResults(String identifier) {
-		for (String variable : contextVariables.keySet()) {
-			if (variable.equals(identifier)) {
-				return (HashSet<SpoofResult>) contextVariables.get(variable);
-			}
-		}
-		return null;
-	}
-
-	// TODO ?
-	public void clean() {
-		
+		return (HashSet<SpoofResult>) contextVariables.get(identifier);
 	}
 	
-	// TODO
 	public Result generateResult(String[] selectStrings) {
 		
 		Result result = new Result();

@@ -1,7 +1,9 @@
 package persistence;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import model.Relation;
 import model.Subject;
@@ -113,11 +115,12 @@ public class TransactionHandler {
 		String[] splitQuery = query.split(":");
 
 		String selectStatement = splitQuery[0];
-		String[] selectorStrings = selectStatement.split(", ");
+		String[] selectorStrings = selectStatement.split(",");
+		Arrays.asList(selectorStrings).stream().map(String::trim).collect(Collectors.toList());
 
 		String whereStatement = splitQuery[1];
 		// Split each WHERE substatement by '&'
-		String[] conditionStatements = whereStatement.split("& ");
+		String[] conditionStatements = whereStatement.split("&");
 
 		Context context = new Context();
 
@@ -125,6 +128,9 @@ public class TransactionHandler {
 		for (String conditionStatement : conditionStatements) {
 
 			String[] conditionStrings = conditionStatement.split(" ");
+			if (conditionStrings[0].isEmpty()) {
+				conditionStrings = Arrays.copyOfRange(conditionStrings, 1, conditionStrings.length);
+			}
 
 			// Evaluating left side of the condition
 			String left = conditionStrings[0];

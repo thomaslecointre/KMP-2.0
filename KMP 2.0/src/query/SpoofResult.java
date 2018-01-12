@@ -9,10 +9,10 @@ import model.Subject;
  */
 public class SpoofResult {
 	private int key;
-	HashSet<Subject> subjects = new HashSet<>();
+	private HashSet<Subject> subjects = new HashSet<>();
 
 	public SpoofResult(int key) {
-		this.setKey(key);
+		this.key = key;
 	}
 
 	/**
@@ -48,8 +48,8 @@ public class SpoofResult {
 	public int getKey() {
 		return key;
 	}
-
-	public void setKey(int key) {
-		this.key = key;
+	
+	public HashSet<Subject> getSubjects() {
+		return subjects;
 	}
 }
