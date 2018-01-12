@@ -1,11 +1,13 @@
 package persistence;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import model.ID;
 import model.Relation;
 import model.Subject;
-
-import java.util.*;
-import java.util.function.Supplier;
 
 /**
  * This class is used to store in the form of a map between Relation objects and Subject objects. Every EntryData instance has an ID field.
