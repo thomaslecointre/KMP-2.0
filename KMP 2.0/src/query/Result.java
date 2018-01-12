@@ -38,16 +38,16 @@ public class Result {
 				res.append("\n[");
 				if (spoofResults != null) {
 					for (SpoofResult spoofResult : spoofResults) {
-						res.append("\n\t").append(spoofResult.getKey()).append(", ");
+						res.append("\n\t").append(spoofResult.getKey());
 						HashSet<Subject> subjects = spoofResult.getSubjects();
 						if (subjects.size() > 1) {
-							res.append("{ ");
+							res.append(" { ");
 							for(Subject subject : subjects) {
 								res.append(subject).append(' ');
 							}
 							res.append('}');
-						} else {
-							res.append(subjects.iterator().next());
+						} else if (subjects.size() == 1) {
+							res.append(' ').append(subjects.iterator().next());
 						}
 					}
 				}

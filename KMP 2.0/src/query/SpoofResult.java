@@ -10,6 +10,8 @@ import model.Subject;
 public class SpoofResult {
 	private int key;
 	private HashSet<Subject> subjects = new HashSet<>();
+	private boolean right = false;
+	
 
 	public SpoofResult(int key) {
 		this.key = key;
@@ -51,5 +53,13 @@ public class SpoofResult {
 	
 	public HashSet<Subject> getSubjects() {
 		return subjects;
+	}
+	
+	public void setRight() {
+		right = true;
+	}
+	
+	public boolean isRight() {
+		return right;
 	}
 }

@@ -2,6 +2,7 @@ package persistence;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -116,11 +117,18 @@ public class TransactionHandler {
 
 		String selectStatement = splitQuery[0];
 		String[] selectorStrings = selectStatement.split(",");
-		Arrays.asList(selectorStrings).stream().map(String::trim).collect(Collectors.toList());
+		// Remove unnecessary whitespace around each selector variable
+		List<String> selectorList = Arrays.asList(selectorStrings).stream().map(String::trim)
+				.collect(Collectors.toList());
+		selectorStrings = selectorList.toArray(new String[selectorList.size()]);
 
-		String whereStatement = splitQuery[1];
+		String whereStatement = splitQuery[1]; // where -> ?X is ?Y & ?X has ?Z ...
 		// Split each WHERE substatement by '&'
-		String[] conditionStatements = whereStatement.split("&");
+		String[] conditionStatements = whereStatement.split("&"); // condition statement -> ?X is ?Y
+		// Remove unnecessary whitespace around each condition statement
+		List<String> conditionList = Arrays.asList(conditionStatements).stream().map(String::trim)
+				.collect(Collectors.toList());
+		conditionStatements = conditionList.toArray(new String[conditionList.size()]);
 
 		Context context = new Context();
 
@@ -244,7 +252,7 @@ public class TransactionHandler {
 					}
 				}
 			} else {
-										
+
 				Subject subject = database.findSubject(right);
 				// Cleaning out bad relations and bad left hand spoof results
 				HashSet<SpoofResult> spoofResultsLeftMarkedForRemoval = (HashSet<SpoofResult>) spoofResultsLeft.clone();
