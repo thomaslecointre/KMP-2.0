@@ -1,9 +1,16 @@
 package persistence;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import model.Relation;
 import model.Subject;
-
-import java.util.*;
+import query.Context;
+import query.Pair;
+import query.Result;
+import query.SpoofResult;
 
 /**
  * This class is an intermediary request handling class and communicates with
@@ -94,48 +101,6 @@ public class TransactionHandler {
 		System.out.println(database);
 	}
 
-	/**
-	 * Class used to represent mappings for certain WHERE variables.
-	 */
-	private class SpoofResult {
-		int key;
-		HashSet<Subject> subjects = new HashSet<>();
-
-		SpoofResult(int key) {
-			this.key = key;
-		}
-
-		/**
-		 * Adds an instance of Subject to the subjects field.
-		 * 
-		 * @param subject
-		 *            an instance of Subject.
-		 */
-		void addSubject(Subject subject) {
-			this.subjects.add(subject);
-		}
-
-		/**
-		 * Adds all instances of Subjects from the subjects parameter to the
-		 * subjects field.
-		 * 
-		 * @param subjects
-		 *            an set of subjects.
-		 */
-		void addSubjects(HashSet<Subject> subjects) {
-			this.subjects.addAll(subjects);
-		}
-
-		@Override
-		public boolean equals(Object object) {
-			if (!(object instanceof SpoofResult)) {
-				return false;
-			}
-			SpoofResult spoofResult = (SpoofResult) object;
-			return this == spoofResult || this.key == spoofResult.key && this.subjects.equals(spoofResult.subjects);
-		}
-	}
-
 	// TODO
 
 	/**
@@ -147,38 +112,31 @@ public class TransactionHandler {
 	 * @param query
 	 *            a string corresponding to a user entry.
 	 */
-	public void requestQuery(String query) {
+	public Result requestQuery(String query) {
 		// Split the query into its SELECT phase and its WHERE phase
 		String[] splitQuery = query.split(":");
 
 		String selectStatement = splitQuery[0];
 		String[] selectorStrings = selectStatement.split(", ");
 
-		// Prepare mappings for SELECT variables
-		HashMap<String, Object> selectorMappings = new HashMap<>();
-		
-		for (String selectorString : selectorStrings) {
-			selectorMappings.put(selectorString, null);
-		}
-
 		String whereStatement = splitQuery[1];
 		// Split each WHERE substatement by '&'
 		String[] conditionStatements = whereStatement.split("& ");
 
-		HashMap<String, Object> conditionMappings = new HashMap<>();
+		Context context = new Context();
 		
 		// Iterate through all the conditions of the WHERE statement
 		for (String conditionStatement : conditionStatements) {
-
+			
 			String[] conditionStrings = conditionStatement.split(" ");
-
+			
 			// Evaluating left side of the condition
 			String left = conditionStrings[0];
 			
 			HashSet<SpoofResult> spoofResultsLeft;
 			
-			if (conditionMappings.containsKey(left)) {
-				spoofResultsLeft = (HashSet<SpoofResult>) conditionMappings.get(left);
+			if (context.containsKey(left)) {
+				spoofResultsLeft = (HashSet<SpoofResult>) context.getSpoofResults(left);
 			} else {
 				spoofResultsLeft = new HashSet<>();
 			}
@@ -209,15 +167,15 @@ public class TransactionHandler {
 			
 			HashSet<Relation> relations;
 			
-			if (conditionMappings.containsKey(middle)) {
-				relations = (HashSet<Relation>) conditionMappings.get(middle);
+			if (context.containsKey(middle)) {
+				relations = (HashSet<Relation>) context.getRelations(middle);
 			} else {
 				relations = new HashSet<>();
 			}
 			
 			if (middle.charAt(0) == '?') {
 				for (SpoofResult spoofResultLeft : spoofResultsLeft) {
-					EntryData entryData = database.getEntryData(spoofResultLeft.key);
+					EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
 					relations.addAll(entryData.relations());
 				}
 			} else {
@@ -229,7 +187,7 @@ public class TransactionHandler {
 				// condition
 				HashSet<SpoofResult> spoofResultsLeftMarkedForRemoval = (HashSet<SpoofResult>) spoofResultsLeft.clone();
 				for (SpoofResult spoofResultLeft : spoofResultsLeft) {
-					EntryData entryDataLeft = database.getEntryData(spoofResultLeft.key);
+					EntryData entryDataLeft = database.getEntryData(spoofResultLeft.getKey());
 					if (!entryDataLeft.containsRelation(relation)) {
 						spoofResultsLeftMarkedForRemoval.remove(spoofResultLeft);
 					}
@@ -241,8 +199,8 @@ public class TransactionHandler {
 			String right = conditionStrings[2];
 			
 			HashSet<SpoofResult> spoofResultsRight;
-			if (conditionMappings.containsKey(right)) {
-				spoofResultsRight = (HashSet<SpoofResult>) conditionMappings.get(right);
+			if (context.containsKey(right)) {
+				spoofResultsRight = (HashSet<SpoofResult>) context.getSpoofResults(right);
 			} else {
 				spoofResultsRight = new HashSet<>();
 			}
@@ -250,8 +208,8 @@ public class TransactionHandler {
 			if (right.charAt(0) == '?') {
 				if (middle.charAt(0) == '?') {
 					for (SpoofResult spoofResultLeft : spoofResultsLeft) {
-						EntryData entryData = database.getEntryData(spoofResultLeft.key);
-						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
+						EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
+						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.getKey());
 						for (Relation relation : relations) {
 							if (entryData.containsRelation(relation)) {
 								spoofResultRight.addSubjects(entryData.getSubjects(relation));
@@ -262,9 +220,9 @@ public class TransactionHandler {
 				} else {
 					Relation relation = relations.iterator().next();
 					for (SpoofResult spoofResultLeft : spoofResultsLeft) {
-						EntryData entryData = database.getEntryData(spoofResultLeft.key);
+						EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
 						HashSet<Subject> subjects = entryData.getSubjects(relation);
-						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
+						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.getKey());
 						spoofResultRight.addSubjects(subjects);
 						spoofResultsRight.add(spoofResultRight);
 					}
@@ -280,8 +238,8 @@ public class TransactionHandler {
 					for (Relation relation : relations) {
 						boolean relationStillValid = false;
 						for (SpoofResult spoofResultLeft : spoofResultsLeft) {
-							EntryData entryData = database.getEntryData(spoofResultLeft.key);
-							SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
+							EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
+							SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.getKey());
 							if (entryData.containsRelation(relation)) {
 								if (entryData.getSubjects(relation).contains(subject)) {
 									spoofResultRight.addSubject(subject);
@@ -302,8 +260,8 @@ public class TransactionHandler {
 					Relation relation = relations.iterator().next();
 					boolean relationStillValid = false;
 					for (SpoofResult spoofResultLeft : spoofResultsLeft) {
-						EntryData entryData = database.getEntryData(spoofResultLeft.key);
-						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.key);
+						EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
+						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft.getKey());
 						if (entryData.containsRelation(relation)) {
 							if (entryData.getSubjects(relation).contains(subject)) {
 								spoofResultRight.addSubject(subject);
@@ -323,23 +281,26 @@ public class TransactionHandler {
 				relations = relationsMarkedForRemoval;
 			}
 			
-			// Add the results to conditionMappings
+			ArrayList<Pair<String, Object>> updatedVariables = new ArrayList<>();
+			
 			if (left.charAt(0) == '?') {
-				conditionMappings.put(left, spoofResultsLeft);
+				updatedVariables.add(new Pair(left, spoofResultsLeft));
 			}
 			if (middle.charAt(0) == '?') {
-				conditionMappings.put(middle, relations);
+				updatedVariables.add(new Pair(middle, relations));
 			}
 			if (right.charAt(0) == '?') {
-				conditionMappings.put(right, spoofResultsRight);
+				updatedVariables.add(new Pair(right, spoofResultsRight));
 			}
 			
-			// Clean previous mappings
+			// Update context
+			context.addSubContext(updatedVariables);
 			
+			// Clean context
+			context.clean();
 		}
+		
+		return context.generateResult(selectorStrings);
 	}
 	
-	private void cleanMappings() {
-		
-	}
 }
