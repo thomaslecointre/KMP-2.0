@@ -1,10 +1,17 @@
 package model;
 
+import java.io.Serializable;
+
 /**
  * This class is used to represent a Relation object in the database.
  */
-public class Relation extends Data {
-    public Relation(String id) {
+public class Relation extends Data implements Serializable {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public Relation(String id) {
         this.id = id;
     }
 
@@ -20,4 +27,9 @@ public class Relation extends Data {
         Relation relation = (Relation) object;
         return this == relation || this.id.equals(relation.id);
     }
+
+	@Override
+	public String toString() {
+		return id;
+	}
 }

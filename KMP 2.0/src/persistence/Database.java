@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import model.Data;
+import model.ID;
 import model.Relation;
 import model.Subject;
 
@@ -234,7 +235,7 @@ public class Database implements Serializable {
 		out.writeObject(this);
 		out.close();
 		fileOut.close();
-		System.out.printf("data serialized in /dataSerialized/" + fileName);
+		System.out.printf("data serialized in " + createPath(fileName));
 	}
 	
 	public Database readObject(Database db, String fileName) throws IOException, ClassNotFoundException {
@@ -253,4 +254,43 @@ public class Database implements Serializable {
 		System.out.println("\ndata read from " + createPath(fileName));
 		return db;
 	}
+	
+	/*
+	public static void main(String[] args) {
+		Database db = new Database();
+		EntryData ed = new EntryData();
+		ed.setID(new Subject("laurent"));
+		ed.put(new Relation("ismarried"), new Subject("sophie"));
+		ed.put(new Relation("worksfor"), new Subject("ensisa"));
+		EntryData ed2 = new EntryData();
+		ed2.setID(new Subject("sophie"));
+		ed2.put(new Relation("ismarried"), new Subject("laurent"));
+		ed2.put(new Relation("worksfor"), new Subject("enscmu"));
+		ed2.put(new Relation("eats"), new Subject("chocolate"));
+		ed2.put(new Relation("drinks"), new Subject("coffee"));
+		ed2.put(new Relation("playswith"), new Subject("children"));
+		db.insert(ed);
+		db.insert(ed2);
+		//System.out.println("ed : " + ed.toString() + "\ned2 : " + ed2.toString() + "db : " + db.toString());
+		
+		//serialisation
+		System.out.println("\nserialization");
+		try {
+			db.writeObject("tmp");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//deserialization
+		System.out.println("\n\ndeserialization");
+		Database data2 = new Database();
+		try {
+			data2 = data2.readObject(data2, "tmp");
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println(db.toString());
+		
+	}
+	*/
 }
