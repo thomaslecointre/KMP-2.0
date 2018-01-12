@@ -1,14 +1,11 @@
 package persistence;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 import model.Relation;
 import model.Subject;
 import query.Context;
-import query.Pair;
 import query.Result;
 import query.SpoofResult;
 
@@ -104,10 +101,9 @@ public class TransactionHandler {
 	// TODO
 
 	/**
-	 * Method used to process queries of all sorts defined by a loosely based
-	 * SPARQL-like language. The method splits the query into two at the
-	 * beginning, the left side corresponding to the SELECT phase, the right
-	 * corresponding to the WHERE phase.
+	 * Method used to process queries written in a loosely based SPARQL-like
+	 * language. The method splits the query in two, the left side corresponding to
+	 * the SELECT phase, the right corresponding to the WHERE phase.
 	 * 
 	 * @param query
 	 *            a string corresponding to a user entry.
@@ -124,55 +120,62 @@ public class TransactionHandler {
 		String[] conditionStatements = whereStatement.split("& ");
 
 		Context context = new Context();
-		
+
 		// Iterate through all the conditions of the WHERE statement
 		for (String conditionStatement : conditionStatements) {
-			
+
 			String[] conditionStrings = conditionStatement.split(" ");
-			
+
 			// Evaluating left side of the condition
 			String left = conditionStrings[0];
-			
+
 			HashSet<SpoofResult> spoofResultsLeft;
-			
+			boolean newVariableLeft = false;
+
 			if (context.containsKey(left)) {
-				spoofResultsLeft = (HashSet<SpoofResult>) context.getSpoofResults(left);
+				spoofResultsLeft = (HashSet<SpoofResult>) context.getSpoofResults(left).clone();
 			} else {
 				spoofResultsLeft = new HashSet<>();
+				newVariableLeft = true;
 			}
-			
-			if (spoofResultsLeft.isEmpty()) {
-				if (left.charAt(0) == '?') {
-					Set<Integer> keys = database.getAllKeys();
-					for (Integer key : keys) {
+
+			if (left.charAt(0) == '?') {
+				Set<Integer> keys = database.getAllKeys();
+				for (Integer key : keys) {
+					spoofResultsLeft.add(new SpoofResult(key));
+				}
+			} else {
+				// Test if left is an id or an int value (key)
+				int key = 0;
+				try {
+					key = Integer.parseInt(left);
+				} catch (NumberFormatException e) {
+					key = database.findKey(left);
+				} finally {
+					if (key != 0) {
 						spoofResultsLeft.add(new SpoofResult(key));
-					}
-				} else {
-					// Test if left is an id or an int value (key)
-					int key = 0;
-					try {
-						key = Integer.parseInt(left);
-					} catch (NumberFormatException e) {
-						key = database.findKey(left);
-					} finally {
-						if (key != 0) {
-							spoofResultsLeft.add(new SpoofResult(key));
-						}
 					}
 				}
 			}
-			
+
+			// Only keep the intersection of current and previous results for this variable
+			if (!newVariableLeft) {
+				spoofResultsLeft.retainAll(context.getSpoofResults(left));
+			}
+
 			// Evaluating the middle of the condition (relation)
 			String middle = conditionStrings[1];
-			
+
 			HashSet<Relation> relations;
-			
+			boolean newVariableMiddle = false;
+
 			if (context.containsKey(middle)) {
 				relations = (HashSet<Relation>) context.getRelations(middle);
 			} else {
 				relations = new HashSet<>();
+				newVariableMiddle = true;
 			}
-			
+
 			if (middle.charAt(0) == '?') {
 				for (SpoofResult spoofResultLeft : spoofResultsLeft) {
 					EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
@@ -195,16 +198,23 @@ public class TransactionHandler {
 				spoofResultsLeft = spoofResultsLeftMarkedForRemoval;
 			}
 
+			if (!newVariableMiddle) {
+				relations.retainAll(context.getRelations(middle));
+			}
+
 			// Evaluating the right side of the condition
 			String right = conditionStrings[2];
-			
+
 			HashSet<SpoofResult> spoofResultsRight;
+			boolean newVariableRight = false;
+
 			if (context.containsKey(right)) {
-				spoofResultsRight = (HashSet<SpoofResult>) context.getSpoofResults(right);
+				spoofResultsRight = (HashSet<SpoofResult>) context.getSpoofResults(right).clone();
 			} else {
 				spoofResultsRight = new HashSet<>();
+				newVariableRight = true;
 			}
-			
+
 			if (right.charAt(0) == '?') {
 				if (middle.charAt(0) == '?') {
 					for (SpoofResult spoofResultLeft : spoofResultsLeft) {
@@ -228,7 +238,7 @@ public class TransactionHandler {
 					}
 				}
 			} else {
-
+										
 				Subject subject = database.findSubject(right);
 				// Cleaning out bad relations and bad left hand spoof results
 				HashSet<SpoofResult> spoofResultsLeftMarkedForRemoval = (HashSet<SpoofResult>) spoofResultsLeft.clone();
@@ -255,7 +265,6 @@ public class TransactionHandler {
 							relationsMarkedForRemoval.remove(relation);
 						}
 					}
-					
 				} else {
 					Relation relation = relations.iterator().next();
 					boolean relationStillValid = false;
@@ -280,27 +289,24 @@ public class TransactionHandler {
 				spoofResultsLeft = spoofResultsLeftMarkedForRemoval;
 				relations = relationsMarkedForRemoval;
 			}
-			
-			ArrayList<Pair<String, Object>> updatedVariables = new ArrayList<>();
-			
+
+			if (!newVariableRight) {
+				spoofResultsRight.retainAll(context.getRelations(right));
+			}
+
 			if (left.charAt(0) == '?') {
-				updatedVariables.add(new Pair(left, spoofResultsLeft));
+				context.put(left, spoofResultsLeft);
 			}
 			if (middle.charAt(0) == '?') {
-				updatedVariables.add(new Pair(middle, relations));
+				context.put(middle, relations);
 			}
 			if (right.charAt(0) == '?') {
-				updatedVariables.add(new Pair(right, spoofResultsRight));
+				context.put(right, spoofResultsRight);
 			}
-			
-			// Update context
-			context.addSubContext(updatedVariables);
-			
-			// Clean context
-			context.clean();
+
 		}
-		
+
 		return context.generateResult(selectorStrings);
 	}
-	
+
 }
