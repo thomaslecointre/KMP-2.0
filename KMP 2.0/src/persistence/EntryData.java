@@ -1,16 +1,24 @@
 package persistence;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+
 import model.ID;
 import model.Relation;
 import model.Subject;
 
-import java.util.*;
-import java.util.function.Supplier;
-
 /**
  * This class is used to store in the form of a map between Relation objects and Subject objects. Every EntryData instance has an ID field.
  */
-public class EntryData {
+public class EntryData implements Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private ID id;
     private HashMap<Relation, HashSet<Subject>> relationMap;
 
@@ -80,4 +88,30 @@ public class EntryData {
     public boolean containsRelation(Relation relation) {
         return relationMap.containsKey(relation);
     }
+    
+    
+    
+    
+    
+
+	@Override
+	public String toString() {
+		StringBuilder res = new StringBuilder();
+		res.append("id => ").append(this.getIdAsString()).append(" | ");
+		for(Relation relation : this.relations()) {
+			res.append(relation.getId()).append(" => ");
+			HashSet<Subject> subjects = this.getSubjects(relation);
+			if(subjects.size() > 1) {
+				res.append("{ ");
+				for(Subject subject : subjects) {
+					res.append(subject.getId()).append(' ');
+				}
+				res.append("} | ");
+			} else if(subjects.size() == 1) {
+				res.append(((Subject)subjects.toArray()[0]).getId());
+				res.append(" | ");
+			}
+		}
+		return res.toString();
+	}
 }
