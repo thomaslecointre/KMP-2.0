@@ -64,6 +64,20 @@ public class Console implements Runnable {
 	private Modes mode;
 	private Modes parentMode;
 	private String promptMessage = "\n> ";
+	
+	/**
+	 * Sets prompt message.
+	 */
+	private void setPromptMessage(Modes mode) {
+		promptMessage = "\n" + mode.REPRESENTATION + " > ";
+	}
+	
+	/**
+	 * Resets prompt message.
+	 */
+	private void resetPromptMessage() {
+		promptMessage = "\n> ";
+	}
 
 	/**
 	 * Prints out the prompt to the standard output.
@@ -212,18 +226,24 @@ public class Console implements Runnable {
 			if (mode != null) {
 				switch (mode) {
 				case INSERT:
+					setPromptMessage(Modes.INSERT);
 					while (mode == Modes.INSERT) {
 						String insertion = nextCommand(Modes.INSERT);
 						if (insertion != null) {
 							transactionHandler.requestInsert(insertion);
+						} else {
+							resetPromptMessage();
 						}
 					}
 					break;
 				case QUERY:
+					setPromptMessage(Modes.QUERY);
 					while (mode == Modes.QUERY) {
 						String query = nextCommand(Modes.QUERY);
 						if (query != null) {
 							transactionHandler.requestQuery(query);
+						} else {
+							resetPromptMessage();
 						}
 					}
 					break;
