@@ -269,12 +269,21 @@ public class Console implements Runnable {
 		}
 		
 		//check tokens valid a-zA-Z_0-9
-		for (String token : tokens) {
-			if (isKeyWord(token)) {
-				System.out.println("Incorrect : keyword in the tokens");
-				return false;
-			}
+		Pattern patternValidTokens = Pattern.compile("\\w+\\s+\\w+\\s+\\w+(\\s+\\w+\\s+\\w+)*");
+		Matcher matcherValidTokens = patternValidTokens.matcher(command);
+		if (!matcherValidTokens.matches()) {
+			System.out.println("Incorrect : command should be like 'a b c' or 'laurent is man is Married Sophie worksFor ENSISA'");
+			return false;
 		}
+		
+		//check ID : Spiderman ID PeterParker
+		Pattern patternPresenceID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);
+		Matcher matcherPresenceID = patternPresenceID.matcher(command);
+		if (matcherPresenceID.find()) {
+			System.out.println("Incorrect : 'id' is not allowed");
+			return false;
+		}
+		
 		return true;
 	}
 
@@ -340,6 +349,22 @@ public class Console implements Runnable {
 			return false;
 		}
 		
+		//check relation not placed at the extremity
+		ArrayList<String> ids = new ArrayList<String>(), relations = new ArrayList<String>(), subjects = new ArrayList<String>();
+		Pattern patternRelations = Pattern.compile("\\s*(\\??\\w+)\\s+(\\??\\w+)\\s+(\\??\\w+)(\\s+&)?");
+		Matcher matcherRelations = patternRelations.matcher(where);
+		while(matcherRelations.find()) {
+            ids.add(matcherRelations.group(1));
+			relations.add(matcherRelations.group(2));
+			subjects.add(matcherRelations.group(3));
+        }
+		for (String relation : relations) {
+			if (ids.contains(relation) || subjects.contains(relation)) {
+				System.out.println("Incorrect : conflict between relations and IDs/subjects");
+				return false;
+			}
+		}
+		
 		return true;
 	}
 
@@ -394,15 +419,28 @@ public class Console implements Runnable {
 	
 	/*
 	public static void main(String[] args) {
+		
+		
 		//insertion
-		System.out.println(validateInsertion("laurent"));
 		System.out.println(validateInsertion("laurent isMarried Sophie"));
 		System.out.println(validateInsertion("laurent isMarried Sophie worksfor ENSISA"));
-		System.out.println(validateInsertion("laurent is Married Sophie"));     //false
+		System.out.println(validateInsertion("laurent"));									//false length < 3
+		System.out.println(validateInsertion("laurent is Married Sophie"));					//false parity
+		System.out.println(validateInsertion("laurent insert Sophie"));						//false keywords
+		System.out.println(validateInsertion("laurent is/-*Married Sophie"));				//false invalid tokens
+		System.out.println(validateInsertion("Spiderman ID PeterParker"));					//false ID
+		
 		//query
 		System.out.println(validateQuery("?x : ?x is man"));
-		System.out.println(validateQuery("?x, ?y : ?x is man & ?x id ?y"));
-		System.out.println(validateQuery("?x, ?y : ?x is man"));   //false
+		System.out.println(validateQuery("?x, ?y : ?x is man & ?x worksFor ?y"));
+		System.out.println(validateQuery("?x, ?y : ?x is  human:man"));						//false global structure
+		System.out.println(validateQuery("?x ?y : ?x is man & ?x worksFor ?y"));			//false data structure
+		System.out.println(validateQuery("?x, ?y, ?x : ?x is man & ?x worksFor ?y"));		//false data names
+		System.out.println(validateQuery("?x : ?x ID Spiderman"));							//false ID
+		System.out.println(validateQuery("?x, ?y : ?x is man"));							//false variable unused
+		System.out.println(validateQuery("?x, ?y : ?x is man & laurent ?y is"));			//false relation-extremity
+		
+		
 	}
 	*/
 }
