@@ -227,6 +227,11 @@ public class Console implements Runnable {
 		return command;
 	}
 
+	/**
+	 * Checks if the Modes enum are present in the string in parameter 
+	 * @param s a text
+	 * @return a boolean if a Modes enum is present in the string
+	 */
 	private static boolean isKeyWord(String s) {
 		Modes[] modes = Modes.values();
 		StringBuilder keywords = new StringBuilder();
@@ -234,13 +239,18 @@ public class Console implements Runnable {
 			keywords.append(modes[i] + "|");
 		}
 		keywords.append(modes[modes.length-1]);
-		//System.out.println(keywords.toString());
 		
 		Pattern pattern = Pattern.compile(keywords.toString(), Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(s);
         return matcher.find();
     }
 	
+	//TODO allow more characters
+	/**
+	 * Checks if the command is a valid insertion
+	 * @param command a string written by the user 
+	 * @return a boolean if the command is a valid insertion
+	 */
 	private static boolean validateInsertion(String command) {
 		String[] tokens = command.split(" ");
 		
@@ -259,7 +269,6 @@ public class Console implements Runnable {
 		}
 		
 		//check tokens valid a-zA-Z_0-9
-		//TODO
 		for (String token : tokens) {
 			if (isKeyWord(token)) {
 				System.out.println("Incorrect : keyword in the tokens");
@@ -269,6 +278,12 @@ public class Console implements Runnable {
 		return true;
 	}
 
+    //TODO allow more characters
+	/**
+	 * Checks if the command is a valid query
+	 * @param command a string written by the user
+	 * @return a boolean if the command is a valid query
+	 */
 	private static boolean validateQuery(String command) {
 		//check the global structure
 		if (command.split(":").length != 2) {
@@ -278,7 +293,7 @@ public class Console implements Runnable {
 		String data = command.split(":")[0], where = command.split(":")[1];
 		
 		//check the data structure
-		Pattern patternDataStructure = Pattern.compile("\\?\\w+\\s*(,\\s*\\?\\w+\\s*)*");    //TODO allow more characters
+		Pattern patternDataStructure = Pattern.compile("\\?\\w+\\s*(,\\s*\\?\\w+\\s*)*");
 		Matcher matcherDataStruture = patternDataStructure.matcher(data);
 		if (!matcherDataStruture.matches()) {
 			System.out.println("Incorrect : data should be like '?x' or '?x, ?y, ?z'");
@@ -286,7 +301,7 @@ public class Console implements Runnable {
 		}
 		
 		//check that variables have different names : ?x ?y ?x
-		Pattern patternDataVariable = Pattern.compile("\\\\?(\\w+)");    //TODO allow more characters
+		Pattern patternDataVariable = Pattern.compile("\\\\?(\\w+)");
 		Matcher matcherDataVariable = patternDataVariable.matcher(data);
 		ArrayList<String> variables = new ArrayList<String>();
 		while(matcherDataVariable.find()) {
@@ -298,7 +313,7 @@ public class Console implements Runnable {
         }
 		
 		//check the where structure
-		Pattern patternWhereStructure = Pattern.compile("(\\s+\\??\\w+){3}(\\s+&(\\s+\\??\\w+){3})*");    //TODO allow more characters
+		Pattern patternWhereStructure = Pattern.compile("(\\s+\\??\\w+){3}(\\s+&(\\s+\\??\\w+){3})*");
 		Matcher matcherWhereStruture = patternWhereStructure.matcher(where);
 		if (!matcherWhereStruture.matches()) {
 			System.out.println("Incorrect : where should be like '?x ?y ?z' or '?laurent is man & laurent ?worksFor ENSISA'");
@@ -306,7 +321,7 @@ public class Console implements Runnable {
 		}
 		
 		//check ID in where : ?x ID laurent
-		Pattern patternWhereID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);    //TODO allow more characters
+		Pattern patternWhereID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);
 		Matcher matcherWhereID = patternWhereID.matcher(where);
 		if (matcherWhereID.find()) {
 			System.out.println("Incorrect : 'id' is not allowed");
@@ -315,7 +330,7 @@ public class Console implements Runnable {
 		
 		//check no variable unused : ?x, ?y : ?x is man
 		ArrayList<String> whereVariables = new ArrayList<String>();
-		Pattern patternUnusedVariable = Pattern.compile("\\\\?(\\w+)");    //TODO allow more characters
+		Pattern patternUnusedVariable = Pattern.compile("\\\\?(\\w+)");
 		Matcher matcherUnusedVariable = patternUnusedVariable.matcher(where);
 		while(matcherUnusedVariable.find()) {
             whereVariables.add(matcherUnusedVariable.group());
