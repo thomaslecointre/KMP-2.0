@@ -245,7 +245,7 @@ public class Console implements Runnable {
 		String[] tokens = command.split(" ");
 		
 		//check the parity (number of words)
-		if (tokens.length % 2 == 0) {
+		if (tokens.length < 3 || tokens.length % 2 == 0) {
 			System.out.println("Incorrect : number of words");
 			return false;
 		}
@@ -376,9 +376,11 @@ public class Console implements Runnable {
 			
 		}
 	}
+	
 	/*
 	public static void main(String[] args) {
 		//insertion
+		System.out.println(validateInsertion("laurent"));
 		System.out.println(validateInsertion("laurent isMarried Sophie"));
 		System.out.println(validateInsertion("laurent isMarried Sophie worksfor ENSISA"));
 		System.out.println(validateInsertion("laurent is Married Sophie"));     //false
