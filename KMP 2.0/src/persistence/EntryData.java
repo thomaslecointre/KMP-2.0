@@ -22,7 +22,7 @@ public class EntryData implements Serializable {
 	private ID id;
     private HashMap<Relation, HashSet<Subject>> relationMap;
 
-    EntryData() {
+    public EntryData() {
         relationMap = new HashMap<>();
     }
 
@@ -113,5 +113,9 @@ public class EntryData implements Serializable {
 			}
 		}
 		return res.toString();
+	}
+
+	public ID getID() {
+		return id;
 	}
 }

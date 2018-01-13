@@ -17,8 +17,8 @@ public class Context {
 		return (HashSet<Relation>) contextVariables.get(identifier);
 	}
 
-	public HashSet<SpoofResult> getSpoofResults(String identifier) {
-		return (HashSet<SpoofResult>) contextVariables.get(identifier);
+	public SpoofResults getSpoofResults(String identifier) {
+		return (SpoofResults) contextVariables.get(identifier);
 	}
 	
 	public Result generateResult(String[] selectStrings) {

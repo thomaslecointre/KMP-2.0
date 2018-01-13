@@ -2,8 +2,8 @@ package ui;
 
 import java.util.Scanner;
 
-import persistence.TransactionHandler;
 import query.Result;
+import query.TransactionHandler;
 
 /**
  * This class is the closest to the user. It interacts with TransactionHandler for requests.

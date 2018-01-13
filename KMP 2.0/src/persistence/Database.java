@@ -38,7 +38,7 @@ public class Database implements Serializable {
 		return table.keySet().size();
 	}
 
-	Database() {
+	public Database() {
 		table = new HashMap<>();
 		objects = new ArrayList<>();
 	}
@@ -145,6 +145,10 @@ public class Database implements Serializable {
 			}
 		}
 		return 0;
+	}
+	
+	public int findKey(Subject id) {
+		return findKey(id.getId());
 	}
 
 	@Override
@@ -253,6 +257,10 @@ public class Database implements Serializable {
 		}
 		System.out.println("\ndata read from " + createPath(fileName));
 		return db;
+	}
+
+	public Subject getID(Integer key) {
+		return table.get(key).getID().getSubject();
 	}
 	
 	/*

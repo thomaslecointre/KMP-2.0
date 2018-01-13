@@ -1,20 +1,28 @@
 package query;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import model.Subject;
+import persistence.Database;
 
 /**
  * Class used to represent mappings for certain WHERE variables.
  */
 public class SpoofResult {
-	private int key;
-	private HashSet<Subject> subjects = new HashSet<>();
-	private boolean right = false;
 	
-
-	public SpoofResult(int key) {
+	private int key;
+	private Subject id;
+	private HashSet<Subject> subjects;
+	
+	public SpoofResult(int key, Subject id) {
 		this.key = key;
+		this.id = id;
+		this.subjects = new HashSet<>();
+	}
+	
+	public SpoofResult(SpoofResult spoofResult) {
+		this(spoofResult.key, spoofResult.id);
 	}
 
 	/**
@@ -44,22 +52,34 @@ public class SpoofResult {
 			return false;
 		}
 		SpoofResult spoofResult = (SpoofResult) object;
-		return this == spoofResult || this.getKey() == spoofResult.getKey() && this.subjects.equals(spoofResult.subjects);
+		return this == spoofResult || this.subjects.containsAll(spoofResult.subjects) || spoofResult.subjects.containsAll(this.subjects);
 	}
 
 	public int getKey() {
 		return key;
 	}
 	
+	
 	public HashSet<Subject> getSubjects() {
 		return subjects;
 	}
-	
-	public void setRight() {
-		right = true;
+
+	public ArrayList<SpoofResult> transferID(TransactionHandler transactionHandler) {
+		ArrayList<SpoofResult> newSpoofResults = new ArrayList();
+		for (Subject subject : subjects) {
+			int newKey = transactionHandler.getDatabase().findKey(subject);
+			if (newKey != 0) {
+				newSpoofResults.add(new SpoofResult(newKey, subject));
+			} else {
+				transactionHandler.flushEntry(key);
+			}
+		}
+		return newSpoofResults;
 	}
-	
-	public boolean isRight() {
-		return right;
+
+	public Subject getID() {
+		return id;
 	}
+
+	
 }

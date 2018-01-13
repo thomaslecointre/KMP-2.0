@@ -27,33 +27,51 @@ public class Result {
 			
 			res.append("\n\n").append(identifier);
 			Object object = selectorMappings.get(identifier);
-			HashSet<SpoofResult> spoofResults = null;
+			SpoofResults spoofResults = null;
 			HashSet<Relation> relations = null;
 			
 			try {
-				spoofResults = (HashSet<SpoofResult>) object;
+				spoofResults = (SpoofResults) object;
 			} catch (ClassCastException e) {
 				relations = (HashSet<Relation>) object;
 			} finally {
 				res.append("\n[");
 				if (spoofResults != null) {
-					for (SpoofResult spoofResult : spoofResults) {
-						res.append("\n\t").append(spoofResult.getKey());
-						HashSet<Subject> subjects = spoofResult.getSubjects();
-						if (subjects.size() > 1) {
-							res.append(" { ");
-							for(Subject subject : subjects) {
-								res.append(subject).append(' ');
+					if (!spoofResults.usedOnTheRight()) {
+						for (SpoofResult spoofResult : spoofResults.getSpoofResultSet()) {
+							res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
+							Subject id = spoofResult.getID();
+							res.append("ID : ").append(id);
+						}
+					} else {
+						if (!spoofResults.isIdsTransferred()) {
+							for (SpoofResult spoofResult : spoofResults.getSpoofResultSet()) {
+								res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
+								HashSet<Subject> subjects = spoofResult.getSubjects();
+								if (subjects.size() > 1) {
+									res.append("Subjects : { ");
+									for(Subject subject : subjects) {
+										res.append(subject).append(' ');
+									}
+									res.append('}');
+								} else if (subjects.size() == 1) {
+									res.append("Subject : ").append(subjects.iterator().next());
+								} else {
+									res.append("Subjects : NO SUBJECTS FOUND! ");
+								}
 							}
-							res.append('}');
-						} else if (subjects.size() == 1) {
-							res.append(' ').append(subjects.iterator().next());
+						} else {
+							for (SpoofResult spoofResult : spoofResults.getSpoofResultSet()) {
+								res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
+								Subject id = spoofResult.getID();
+								res.append("ID : ").append(id);
+							}
 						}
 					}
 				}
 				if (relations != null) {
 					for (Relation relation : relations) {
-						res.append("\n\t").append(relation);
+						res.append("\n\t").append("Relation : ").append(relation);
 					}
 				}
 				res.append("\n]");
