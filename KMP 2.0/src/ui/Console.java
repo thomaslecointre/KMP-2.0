@@ -156,7 +156,7 @@ public class Console implements Runnable {
 	 */
 	private String nextCommand(Modes currentMode) {
 		parentMode = currentMode;
-		boolean modeDetected, back;
+		boolean modeDetected, back, validEntry;
 		String command;
 		do {
 			promptMessage();
@@ -207,7 +207,19 @@ public class Console implements Runnable {
 					break;
 				} 
 			}
-		} while (!back && modeDetected);
+			if (!modeDetected) {
+				if (currentMode == Modes.INSERT) {
+					if (validateInsertion(command)) {
+						validEntry = true;
+					}
+				}
+				if (currentMode == Modes.QUERY) {
+					if (validateQuery(command)) {
+						validEntry = true;
+					}
+				}
+			}
+		} while ((!back && modeDetected) || !validEntry);
 		
 		return command;
 	}
