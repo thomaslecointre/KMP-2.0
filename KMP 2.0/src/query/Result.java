@@ -5,6 +5,8 @@ import java.util.HashSet;
 
 import model.Relation;
 import model.Subject;
+import query.spoof.SpoofSubject;
+import query.spoof.SpoofVariable;
 
 public class Result {
 
@@ -27,25 +29,25 @@ public class Result {
 			
 			res.append("\n\n").append(identifier);
 			Object object = selectorMappings.get(identifier);
-			SpoofResults spoofResults = null;
+			SpoofVariable spoofResults = null;
 			HashSet<Relation> relations = null;
 			
 			try {
-				spoofResults = (SpoofResults) object;
+				spoofResults = (SpoofVariable) object;
 			} catch (ClassCastException e) {
 				relations = (HashSet<Relation>) object;
 			} finally {
 				res.append("\n[");
 				if (spoofResults != null) {
 					if (!spoofResults.usedOnTheRight()) {
-						for (SpoofResult spoofResult : spoofResults.getSpoofResultSet()) {
+						for (SpoofSubject spoofResult : spoofResults.getSpoofDataSet()) {
 							res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
 							Subject id = spoofResult.getID();
 							res.append("ID : ").append(id);
 						}
 					} else {
 						if (!spoofResults.isIdsTransferred()) {
-							for (SpoofResult spoofResult : spoofResults.getSpoofResultSet()) {
+							for (SpoofSubject spoofResult : spoofResults.getSpoofDataSet()) {
 								res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
 								HashSet<Subject> subjects = spoofResult.getSubjects();
 								if (subjects.size() > 1) {
@@ -61,7 +63,7 @@ public class Result {
 								}
 							}
 						} else {
-							for (SpoofResult spoofResult : spoofResults.getSpoofResultSet()) {
+							for (SpoofSubject spoofResult : spoofResults.getSpoofDataSet()) {
 								res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
 								Subject id = spoofResult.getID();
 								res.append("ID : ").append(id);

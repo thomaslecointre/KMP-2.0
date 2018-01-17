@@ -2,6 +2,7 @@ package query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,6 +12,10 @@ import model.Relation;
 import model.Subject;
 import persistence.Database;
 import persistence.EntryData;
+import query.spoof.SpoofData;
+import query.spoof.SpoofRelation;
+import query.spoof.SpoofSubject;
+import query.spoof.SpoofVariable;
 
 /**
  * This class is an intermediary request handling class and communicates with
@@ -19,11 +24,9 @@ import persistence.EntryData;
 public class TransactionHandler {
 
 	private Database database;
-	private List<Integer> entriesToFlush;
 
 	public TransactionHandler() {
 		database = new Database();
-		entriesToFlush = new ArrayList<>();
 	}
 
 	/**
@@ -115,7 +118,7 @@ public class TransactionHandler {
 	 */
 	@SuppressWarnings("unchecked")
 	public Result requestQuery(String query) {
-		
+
 		// Split the query into its SELECT phase and its WHERE phase
 		String[] splitQuery = query.split(":");
 
@@ -147,205 +150,214 @@ public class TransactionHandler {
 			// Evaluating left side of the condition
 			String left = conditionStrings[0];
 
-			SpoofResults spoofResultsLeft;
-			HashSet<SpoofResult> spoofResultSetLeft;
+			SpoofVariable spoofVariableLeft;
+			HashSet<SpoofData> spoofSubjectsLeft;
 			boolean newVariableLeft = false;
 
 			if (context.containsKey(left)) {
-				spoofResultsLeft = context.getSpoofResults(left);
-				spoofResultSetLeft = (HashSet<SpoofResult>) spoofResultsLeft.getSpoofResultSet().clone();
-				if (spoofResultsLeft.usedOnTheRight()) {
-					entriesToFlush.clear();
-					spoofResultsLeft.transferIDs();
-					for (int entry : entriesToFlush) {
-						
-					}
+				spoofVariableLeft = context.getSpoofResults(left);
+				spoofSubjectsLeft = (HashSet<SpoofData>) spoofVariableLeft.getSpoofDataSet().clone();
+				if (spoofVariableLeft.usedOnTheRight()) {
+					spoofVariableLeft.transferIDs();
 				}
 			} else {
-				spoofResultsLeft = new SpoofResults(this);
-				spoofResultSetLeft = spoofResultsLeft.getSpoofResultSet();
+				spoofVariableLeft = new SpoofVariable(this);
+				spoofSubjectsLeft = spoofVariableLeft.getSpoofDataSet();
 				newVariableLeft = true;
 			}
 
 			if (left.charAt(0) == '?') {
 				Set<Integer> keys = database.getAllKeys();
 				for (Integer key : keys) {
-					spoofResultSetLeft.add(new SpoofResult(key, database.getID(key)));
+					spoofSubjectsLeft.add(new SpoofSubject(key, database.getID(key)));
 				}
 			} else {
 				int key = database.findKey(left);
 				if (key != 0) {
-					spoofResultSetLeft.add(new SpoofResult(key, database.getID(key)));
+					spoofSubjectsLeft.add(new SpoofSubject(key, database.getID(key)));
 				}
 			}
 
 			// Only keep the intersection of current and previous results for this variable
 			if (!newVariableLeft) {
-				spoofResultSetLeft.retainAll(spoofResultsLeft.getSpoofResultSet());
+				spoofSubjectsLeft.retainAll(spoofVariableLeft.getSpoofDataSet());
 			}
 
 			// Evaluating the middle of the condition (relation)
 			String middle = conditionStrings[1];
 
-			HashSet<Relation> relations;
+			SpoofVariable spoofVariableMiddle;
+			HashSet<SpoofData> spoofRelationsMiddle;
 			boolean newVariableMiddle = false;
 
 			if (context.containsKey(middle)) {
-				relations = (HashSet<Relation>) context.getRelations(middle).clone();
+				spoofVariableMiddle = context.getRelations(middle);
+				spoofRelationsMiddle = (HashSet<SpoofData>) spoofVariableMiddle.getSpoofDataSet().clone();
 			} else {
-				relations = new HashSet<>();
+				spoofRelationsMiddle = new HashSet<>();
 				newVariableMiddle = true;
 			}
 
-			HashSet<SpoofResult> spoofResultSetLeftMarkedForRemoval;
+			HashSet<SpoofData> spoofSubjectsLeftMarkedForRemoval;
 
 			if (middle.charAt(0) == '?') {
-				
-				for (SpoofResult spoofResultLeft : spoofResultSetLeft) {
-					EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
-					relations.addAll(entryData.relations());
-				}
-				
-			} else {
-				
-				Relation relation = database.findRelation(middle);
-				
-				if (relation != null) {
-					relations.add(relation);
 
-					// Clean up spoof results on the left that do not satisfy this
-					// condition
-					spoofResultSetLeftMarkedForRemoval = (HashSet<SpoofResult>) spoofResultsLeft.getSpoofResultSet()
+				for (SpoofData spoofDataLeft : spoofSubjectsLeft) {
+					SpoofSubject spoofSubjectLeft = (SpoofSubject) spoofDataLeft;
+					EntryData entryDataLeft = database.getEntryData(spoofSubjectLeft.getKey());
+					spoofRelationsMiddle.add(new SpoofRelation(spoofSubjectLeft.getKey(), entryDataLeft.getRelations()));
+				}
+
+			} else {
+
+				Relation relation = database.findRelation(middle);
+
+				if (relation != null) {
+
+					spoofSubjectsLeftMarkedForRemoval = (HashSet<SpoofData>) spoofVariableLeft.getSpoofDataSet()
 							.clone();
-					for (SpoofResult spoofResultLeft : spoofResultSetLeft) {
-						EntryData entryDataLeft = database.getEntryData(spoofResultLeft.getKey());
-						if (!entryDataLeft.containsRelation(relation)) {
-							spoofResultSetLeftMarkedForRemoval.remove(spoofResultLeft);
+					for (SpoofData spoofDataLeft : spoofSubjectsLeft) {
+						SpoofSubject spoofSubjectLeft = (SpoofSubject) spoofDataLeft;
+						EntryData entryDataLeft = database.getEntryData(spoofSubjectLeft.getKey());
+						if (entryDataLeft.containsRelation(relation)) {
+							spoofRelationsMiddle
+									.add(new SpoofRelation(spoofSubjectLeft.getKey(), entryDataLeft.getRelations()));
+						} else {
+							// Clean left variable if it doesn't have this relation
+							spoofSubjectsLeftMarkedForRemoval.remove(spoofSubjectLeft);
 						}
 					}
-					spoofResultSetLeft = spoofResultSetLeftMarkedForRemoval;
-					
+					spoofSubjectsLeft = spoofSubjectsLeftMarkedForRemoval;
 				}
 			}
 
 			if (!newVariableMiddle) {
-				relations.retainAll(context.getRelations(middle));
+				spoofRelationsMiddle.retainAll(spoofVariableMiddle.getSpoofDataSet());
 			}
 
 			// Evaluating the right side of the condition
 			String right = conditionStrings[2];
 
-			SpoofResults spoofResultsRight;
-			HashSet<SpoofResult> spoofResultSetRight;
+			SpoofVariable spoofVariableRight;
+			HashSet<SpoofData> spoofSubjectsRight;
 			boolean newVariableRight = false;
 
 			if (context.containsKey(right)) {
-				spoofResultsRight = context.getSpoofResults(right);
-				spoofResultSetRight = (HashSet<SpoofResult>) spoofResultsRight.getSpoofResultSet().clone();
+				spoofVariableRight = context.getSpoofResults(right);
+				spoofSubjectsRight = (HashSet<SpoofData>) spoofVariableRight.getSpoofDataSet().clone();
 			} else {
-				spoofResultsRight = new SpoofResults(this);
-				spoofResultSetRight = spoofResultsRight.getSpoofResultSet();
+				spoofVariableRight = new SpoofVariable(this);
+				spoofSubjectsRight = spoofVariableRight.getSpoofDataSet();
 				newVariableLeft = true;
 			}
-			
-			spoofResultsRight.isUsedOnTheRight();
 
-			HashSet<Relation> relationsMarkedForRemoval;
+			spoofVariableRight.isUsedOnTheRight();
+
+			HashSet<SpoofData> spoofRelationsMiddleMarkedForRemoval;
 
 			if (right.charAt(0) == '?') {
 				if (middle.charAt(0) == '?') {
-					for (SpoofResult spoofResultLeft : spoofResultSetLeft) {
-						EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
-						SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft);
-						for (Relation relation : relations) {
-							if (entryData.containsRelation(relation)) {
-								spoofResultRight.addSubjects(entryData.getSubjects(relation));
+					for (SpoofData spoofDataLeft : spoofSubjectsLeft) {
+						SpoofSubject spoofSubjectLeft = (SpoofSubject) spoofDataLeft;
+						EntryData entryData = database.getEntryData(spoofSubjectLeft.getKey());
+						SpoofSubject spoofSubjectRight = new SpoofSubject(spoofSubjectLeft);
+						for (SpoofData spoofDataMiddle : spoofVariableMiddle.getSpoofDataSet()) {
+							SpoofRelation spoofRelationMiddle = (SpoofRelation) spoofDataMiddle;
+							for (Relation relation : spoofRelationMiddle.getRelations()) {
+								if (entryData.containsRelation(relation)) {
+									spoofSubjectRight.addSubjects(entryData.getSubjects(relation));
+								}
 							}
 						}
-						spoofResultSetRight.add(spoofResultRight);
+						spoofSubjectsRight.add(spoofSubjectRight);
 					}
 				} else {
-
-					Relation relation = relations.iterator().next();
+					Relation relation = database.findRelation(middle);
 					if (relation != null) {
-						for (SpoofResult spoofResultLeft : spoofResultSetLeft) {
-							EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
-							HashSet<Subject> subjects = entryData.getSubjects(relation);
-							SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft);
-							spoofResultRight.addSubjects(subjects);
-							spoofResultSetRight.add(spoofResultRight);
+						for (SpoofData spoofDataMiddle : spoofRelationsMiddle) {
+							SpoofRelation spoofRelationMiddle = (SpoofRelation) spoofDataMiddle;
+							for (SpoofData spoofDataLeft : spoofSubjectsLeft) {
+								SpoofSubject spoofSubjectLeft = (SpoofSubject) spoofDataLeft;
+								EntryData entryData = database.getEntryData(spoofSubjectLeft.getKey());
+								HashSet<Subject> subjects = entryData.getSubjects(relation);
+								SpoofSubject spoofResultRight = new SpoofSubject(spoofSubjectLeft);
+								spoofResultRight.addSubjects(subjects);
+								spoofSubjectsRight.add(spoofResultRight);
+							}
 						}
 					}
 				}
-				
+
 			} else {
 				Subject subject = database.findSubject(right);
+				
 				if (subject != null) {
-					// Cleaning out bad relations and bad left hand spoof results
-					spoofResultSetLeftMarkedForRemoval = (HashSet<SpoofResult>) spoofResultSetLeft.clone();
-					relationsMarkedForRemoval = (HashSet<Relation>) relations.clone();
+					// Cleaning out left and middle spoof variables
+					spoofSubjectsLeftMarkedForRemoval = (HashSet<SpoofData>) spoofSubjectsLeft.clone();
+					spoofRelationsMiddleMarkedForRemoval = (HashSet<SpoofData>) spoofVariableMiddle.getSpoofDataSet().clone();
 
 					if (middle.charAt(0) != '?') {
-						for (Relation relation : relations) {
+						for (SpoofData spoofDataMiddle : spoofRelationsMiddle) {
+							SpoofRelation spoofRelationMiddle = (SpoofRelation) spoofDataMiddle;
 							boolean relationStillValid = false;
-							for (SpoofResult spoofResultLeft : spoofResultSetLeft) {
-								EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
-								SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft);
-								if (entryData.containsRelation(relation)) {
-									if (entryData.getSubjects(relation).contains(subject)) {
-										spoofResultRight.addSubject(subject);
-										spoofResultSetRight.add(spoofResultRight);
-										relationStillValid = true;
-										break;
-									} else {
-										spoofResultSetLeftMarkedForRemoval.remove(spoofResultLeft);
-									}
-								}
+							EntryData entryData = database.getEntryData(spoofDataMiddle.getKey());
+							SpoofSubject spoofResultRight = new SpoofSubject(spoofDataMiddle.getKey(), entryData.getID().getSubject());
+							for (Relation relation : spoofRelationMiddle.getRelations()) {
+								
 							}
+							if (entryData.getSubjects(spoofDataMiddle).contains(subject)) {
+								spoofResultRight.addSubject(subject);
+								spoofSubjectsRight.add(spoofResultRight);
+								relationStillValid = true;
+								break;
+							} else {
+								spoofSubjectsLeftMarkedForRemoval.remove(spoofResultLeft);
+							}
+							
 							if (!relationStillValid) {
-								relationsMarkedForRemoval.remove(relation);
+								spoofRelationsMiddleMarkedForRemoval.remove(spoofDataMiddle);
 							}
 						}
 					} else {
-						Relation relation = relations.iterator().next();
+						Relation relation = database.findRelation(middle);
 						if (relation != null) {
 							boolean relationStillValid = false;
-							for (SpoofResult spoofResultLeft : spoofResultSetLeft) {
+							for (SpoofSubject spoofResultLeft : spoofSubjectsLeft) {
 								EntryData entryData = database.getEntryData(spoofResultLeft.getKey());
-								SpoofResult spoofResultRight = new SpoofResult(spoofResultLeft);
+								SpoofSubject spoofResultRight = new SpoofSubject(spoofResultLeft);
 								if (entryData.containsRelation(relation)) {
 									if (entryData.getSubjects(relation).contains(subject)) {
 										spoofResultRight.addSubject(subject);
-										spoofResultSetRight.add(spoofResultRight);
+										spoofSubjectsRight.add(spoofResultRight);
 										relationStillValid = true;
 										break;
 									} else {
-										spoofResultSetLeftMarkedForRemoval.remove(spoofResultLeft);
+										spoofSubjectsLeftMarkedForRemoval.remove(spoofResultLeft);
 									}
 								}
 							}
 							if (!relationStillValid) {
-								relationsMarkedForRemoval.remove(relation);
+								spoofRelationsMiddleMarkedForRemoval.remove(relation);
 							}
 						}
 					}
-					spoofResultSetLeft = spoofResultSetLeftMarkedForRemoval;
-					relations = relationsMarkedForRemoval;
+					spoofSubjectsLeft = spoofSubjectsLeftMarkedForRemoval;
+					spoofVariableMiddle = spoofRelationsMiddleMarkedForRemoval;
 				}
 			}
 
 			if (!newVariableRight) {
-				spoofResultSetRight.retainAll(spoofResultsRight.getSpoofResultSet());
+				spoofSubjectsRight.retainAll(spoofVariableRight.getSpoofDataSet());
 			}
 
 			if (left.charAt(0) == '?') {
-				context.put(left, spoofResultsLeft);
+				context.put(left, spoofVariableLeft);
 			}
 			if (middle.charAt(0) == '?') {
-				context.put(middle, relations);
+				context.put(middle, spoofVariableMiddle);
 			}
 			if (right.charAt(0) == '?') {
-				context.put(right, spoofResultsRight);
+				context.put(right, spoofVariableRight);
 			}
 
 		}
@@ -353,12 +365,8 @@ public class TransactionHandler {
 		return context.generateResult(selectorStrings);
 	}
 
-	protected Database getDatabase() {
+	public Database getDatabase() {
 		return database;
-	}
-
-	public void flushEntry(int key) {
-		entriesToFlush.add(key);
 	}
 
 }

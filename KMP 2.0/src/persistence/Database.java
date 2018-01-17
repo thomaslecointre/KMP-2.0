@@ -160,7 +160,7 @@ public class Database implements Serializable {
 			res.append("\nindex => ").append(key).append(" | ");
 			EntryData entryData = table.get(key);
 			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
-			for(Relation relation : entryData.relations()) {
+			for(Relation relation : entryData.getRelations()) {
 				res.append(relation.getId()).append(" => ");
 				HashSet<Subject> subjects = entryData.getSubjects(relation);
 				if(subjects.size() > 1) {

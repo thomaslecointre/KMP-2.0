@@ -1,24 +1,23 @@
 package query;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
-import model.Relation;
+import query.spoof.SpoofVariable;
 
 public class Context {
 	
-	private HashMap<String, Object> contextVariables = new HashMap();
+	private HashMap<String, SpoofVariable> contextVariables = new HashMap();
 	
 	public boolean containsKey(String identifier) {
 		return contextVariables.containsKey(identifier);
 	}
 
-	public HashSet<Relation> getRelations(String identifier) {
-		return (HashSet<Relation>) contextVariables.get(identifier);
+	public SpoofVariable getRelations(String identifier) {
+		return (SpoofVariable) contextVariables.get(identifier);
 	}
 
-	public SpoofResults getSpoofResults(String identifier) {
-		return (SpoofResults) contextVariables.get(identifier);
+	public SpoofVariable getSpoofResults(String identifier) {
+		return (SpoofVariable) contextVariables.get(identifier);
 	}
 	
 	public Result generateResult(String[] selectStrings) {
@@ -36,7 +35,7 @@ public class Context {
 		return result;
 	}
 
-	public void put(String identifier, Object object) {
+	public void put(String identifier, SpoofVariable object) {
 		contextVariables.put(identifier, object);
 	}
 
