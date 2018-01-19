@@ -3,6 +3,7 @@ package query;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,12 +16,17 @@ import persistence.EntryData;
 
 public class Context {
 
-	private ArrayList<ArrayList<Data>> globalMatrix;
+	private ArrayList<Data[]> globalMatrix;
 	private ArrayList<ArrayList<Data>> currentMatrix;
-	private HashMap<String, ArrayList<Data>> globalVariables;
-	private HashMap<String, ArrayList<Data>> currentVariables;
+	private HashMap<String, HashSet<Data>> globalVariables;
+	private HashMap<String, HashSet<Data>> currentVariables;
+	private HashMap<String, Integer> variableIndices;
+	private int index = 0;
 	private Database database;
-
+	
+	private void incrementVariableIndex() {
+		index++;
+	}
 	public boolean containsKey(String identifier) {
 		return globalVariables.containsKey(identifier);
 	}
@@ -29,6 +35,7 @@ public class Context {
 		this.database = database;
 		globalMatrix = new ArrayList<>();
 		globalVariables = new HashMap<>();
+		variableIndices = new HashMap<>();
 	}
 
 	// TODO Result needs to be regenerated
@@ -41,8 +48,8 @@ public class Context {
 
 	/**
 	 * Method used to process queries written in a loosely based SPARQL-like
-	 * language. The method splits the query in two, the left side corresponding to
-	 * the SELECT phase, the right corresponding to the WHERE phase.
+	 * language. The method splits the query in two, the left side corresponding
+	 * to the SELECT phase, the right corresponding to the WHERE phase.
 	 * 
 	 * @param query
 	 *            a string corresponding to a user entry.
@@ -59,9 +66,13 @@ public class Context {
 				.collect(Collectors.toList());
 		selectorStrings = selectorList.toArray(new String[selectorList.size()]);
 
-		String whereStatement = splitQuery[1]; // where -> ?X is ?Y & ?X has ?Z ...
+		String whereStatement = splitQuery[1]; // where -> ?X is ?Y & ?X has ?Z
+												// ...
 		// Split each WHERE substatement by '&'
-		String[] conditionStatements = whereStatement.split("&"); // condition statement -> ?X is ?Y
+		String[] conditionStatements = whereStatement.split("&"); // condition
+																	// statement
+																	// -> ?X is
+																	// ?Y
 		// Remove unnecessary whitespace around each condition statement
 		List<String> conditionList = Arrays.asList(conditionStatements).stream().map(String::trim)
 				.collect(Collectors.toList());
@@ -81,35 +92,74 @@ public class Context {
 			// Evaluating left side of the condition
 			String left = conditionStrings[0];
 
+			// Fill current matrix
 			if (left.charAt(0) == '?') {
-				currentVariables.put(left, null);				
-				Set<Integer> keys = database.getAllKeys();
+				currentVariables.put(left, null);
+				Set<Integer> keys;
+				// Search for existing values for left variable
+				if (globalVariables.containsKey(left)) {
+					HashSet<Data> values = globalVariables.get(left);
+					keys = new HashSet<>();
+					for (Data data : values) {
+						Subject subject = (Subject) data;
+						int key = database.findKey(subject);
+						keys.add(key);
+					}
+				} else {
+					keys = database.getAllKeys();
+				}
 				for (int key : keys) {
 					EntryData entryData = database.getEntryData(key);
 					String middle = conditionStrings[1];
 					if (middle.charAt(0) == '?') {
 						currentVariables.put(middle, null);
-						String right = conditionStrings[2];
-						if (right.charAt(0) == '?') {
-							currentVariables.put(right, null);
-							for (Relation relation : entryData.getRelations()) {
-								for (Subject subject : entryData.getSubjects(relation)) {
-									ArrayList<Data> line = new ArrayList<>();
-									line.add(database.getID(key));
-									line.add(relation);
-									line.add(subject);
-									currentMatrix.add(line);
-								}
+						Set<Relation> relations;
+						// Search for existing values for middle variable
+						if (globalVariables.containsKey(middle)) {
+							HashSet<Data> values = (HashSet<Data>) globalVariables.get(middle);
+							relations = new HashSet<>();
+							for (Data data : values) {
+								relations.add((Relation) data);
 							}
 						} else {
-							Subject subject = database.findSubject(right);
-							if (subject != null) {
-								for (Relation relation : entryData.getRelations()) {
-									if (entryData.getSubjects(relation).contains(subject)) {
-										ArrayList<Data> line = new ArrayList<>();
-										line.add(database.getID(key));
-										line.add(relation);
-										currentMatrix.add(line);
+							relations = entryData.getRelations();
+						}
+						String right = conditionStrings[2];
+						for (Relation relation : relations) {
+							if (right.charAt(0) == '?') {
+								currentVariables.put(right, null);
+								Set<Subject> subjects;
+								// Search for existing values for right variable
+								if (globalVariables.containsKey(right)) {
+									HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
+									subjects = new HashSet<>();
+									for (Data data : values) {
+										subjects.add((Subject) data);
+									}
+								} else {
+									subjects = entryData.getSubjects(relation);
+								}
+								for (Subject subject : subjects) {
+									if (entryData.containsRelation(relation)) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(database.getID(key));
+											line.add(relation);
+											line.add(subject);
+											currentMatrix.add(line);
+										}
+									}
+								}
+							} else {
+								Subject subject = database.findSubject(right);
+								if (subject != null) {
+									if (entryData.containsRelation(relation)) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(database.getID(key));
+											line.add(relation);
+											currentMatrix.add(line);
+										}
 									}
 								}
 							}
@@ -117,22 +167,38 @@ public class Context {
 					} else {
 						Relation relation = database.findRelation(middle);
 						if (relation != null) {
-							String right = conditionStrings[2];
-							if (right.charAt(0) == '?') {
-								currentVariables.put(right, null);
-								for (Subject subject : entryData.getSubjects(relation)) {
-									ArrayList<Data> line = new ArrayList<>();
-									line.add(database.getID(key));
-									line.add(subject);
-									currentMatrix.add(line);
-								}
-							} else {
-								Subject subject = database.findSubject(right);
-								if (subject != null) {
-									if (entryData.getSubjects(relation).contains(subject)) {
-										ArrayList<Data> line = new ArrayList<>();
-										line.add(database.getID(key));
-										currentMatrix.add(line);
+							if (entryData.containsRelation(relation)) {
+								String right = conditionStrings[2];
+								if (right.charAt(0) == '?') {
+									currentVariables.put(right, null);
+									Set<Subject> subjects;
+									// Search for existing values for right
+									// variable
+									if (globalVariables.containsKey(right)) {
+										HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
+										subjects = new HashSet<>();
+										for (Data data : values) {
+											subjects.add((Subject) data);
+										}
+									} else {
+										subjects = entryData.getSubjects(relation);
+									}
+									for (Subject subject : subjects) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(database.getID(key));
+											line.add(subject);
+											currentMatrix.add(line);
+										}
+									}
+								} else {
+									Subject subject = database.findSubject(right);
+									if (subject != null) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(database.getID(key));
+											currentMatrix.add(line);
+										}
 									}
 								}
 							}
@@ -146,23 +212,51 @@ public class Context {
 					String middle = conditionStrings[1];
 					if (middle.charAt(0) == '?') {
 						currentVariables.put(middle, null);
-						for (Relation relation : entryData.getRelations()) {
+						Set<Relation> relations;
+						// Search for existing values for middle variable
+						if (globalVariables.containsKey(middle)) {
+							HashSet<Data> values = (HashSet<Data>) globalVariables.get(middle);
+							relations = new HashSet<>();
+							for (Data data : values) {
+								relations.add((Relation) data);
+							}
+						} else {
+							relations = entryData.getRelations();
+						}
+						for (Relation relation : relations) {
 							String right = conditionStrings[2];
 							if (right.charAt(0) == '?') {
 								currentVariables.put(right, null);
-								for (Subject subject : entryData.getSubjects(relation)) {
-									ArrayList<Data> line = new ArrayList<>();
-									line.add(relation);
-									line.add(subject);
-									currentMatrix.add(line);
+								Set<Subject> subjects;
+								// Search for existing values for right variable
+								if (globalVariables.containsKey(right)) {
+									HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
+									subjects = new HashSet<>();
+									for (Data data : values) {
+										subjects.add((Subject) data);
+									}
+								} else {
+									subjects = entryData.getSubjects(relation);
+								}
+								for (Subject subject : subjects) {
+									if (entryData.containsRelation(relation)) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(relation);
+											line.add(subject);
+											currentMatrix.add(line);
+										}
+									}
 								}
 							} else {
 								Subject subject = database.findSubject(right);
 								if (subject != null) {
-									if (entryData.getSubjects(relation).contains(subject)) {
-										ArrayList<Data> line = new ArrayList<>();
-										line.add(relation);
-										currentMatrix.add(line);
+									if (entryData.containsRelation(relation)) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(relation);
+											currentMatrix.add(line);
+										}
 									}
 								}
 							}
@@ -170,41 +264,102 @@ public class Context {
 					} else {
 						Relation relation = database.findRelation(middle);
 						if (relation != null) {
-							String right = conditionStrings[2];
-							if (right.charAt(0) == '?') {
-								currentVariables.put(right, null);
-								if (entryData.containsRelation(relation)) {
-									for (Subject subject : entryData.getSubjects(relation)) {
-										ArrayList<Data> line = new ArrayList<>();
-										line.add(subject);									
+							if (entryData.containsRelation(relation)) {
+								String right = conditionStrings[2];
+								if (right.charAt(0) == '?') {
+									currentVariables.put(right, null);
+									Set<Subject> subjects;
+									// Search for existing values for right
+									// variable
+									if (globalVariables.containsKey(right)) {
+										HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
+										subjects = new HashSet<>();
+										for (Data data : values) {
+											subjects.add((Subject) data);
+										}
+									} else {
+										subjects = entryData.getSubjects(relation);
 									}
+									for (Subject subject : subjects) {
+										if (entryData.getSubjects(relation).contains(subject)) {
+											ArrayList<Data> line = new ArrayList<>();
+											line.add(subject);
+										}
+									}
+								} else {
+									// ?
 								}
-							} else {
-								// ?
 							}
 						}
 					}
 				}
 			}
-			
+
+			// Aggregate current variable values
 			int column = 0;
 			for (String variable : currentVariables.keySet()) {
-				ArrayList<Data> variableValues = new ArrayList<>();
+				HashSet<Data> variableValues = new HashSet<>();
 				for (ArrayList<Data> line : currentMatrix) {
 					Data data = line.get(column);
 					variableValues.add(data);
 				}
 				currentVariables.replace(variable, variableValues);
+				column++;
 			}
-			
+
+			// Integrate current variable values into the global variable values
+			// pool
+			ArrayList<String> newVariables = new ArrayList<>();
 			for (String variable : currentVariables.keySet()) {
 				if (globalVariables.containsKey(variable)) {
 					globalVariables.get(variable).retainAll(currentVariables.get(variable));
 				} else {
 					globalVariables.put(variable, currentVariables.get(variable));
+					variableIndices.put(variable, index);
+					incrementVariableIndex();
+					newVariables.add(variable);
 				}
 			}
 
+			// Update the global matrix in accordance with global variable
+			// values
+			if (globalMatrix.size() > 0) {
+				// Remove entries not in accordance with global variable values
+				column = 0;
+				for (String variable : globalVariables.keySet()) {
+					ArrayList<Data[]> restrictedGlobalMatrix = (ArrayList<Data[]>) globalMatrix.clone();
+					for (Data[] datafield : globalMatrix) {
+						if (!globalVariables.get(variable).contains(datafield[column])) {
+							restrictedGlobalMatrix.remove(datafield);
+						}
+					}
+					globalMatrix = restrictedGlobalMatrix;
+					column++;
+				}
+				// TODO Merge current matrix into global matrix
+				switch (newVariables.size()) {
+				case 0:
+					ArrayList<Data[]> newGlobalMatrix = new ArrayList<>();
+					for (Data[] dataField : globalMatrix) {
+						
+						for (ArrayList<Data> line : currentMatrix) {
+							Data[] newDataField = new Data[line.size() + dataField.length];
+							for (String variable : globalVariables.keySet()) {
+								int index = variableIndices.get(variable);
+								newDataField[index] = dataField[index % dataField.length];
+							}
+						}
+					}
+					
+				}
+				// TODO Update global variable values
+
+			} else { // New variable values arriving, the global matrix is empty
+				for (ArrayList<Data> line : currentMatrix) {
+					Data[] datafield = (Data[]) line.toArray();
+					globalMatrix.add(datafield);
+				}
+			}
 		}
 	}
 
