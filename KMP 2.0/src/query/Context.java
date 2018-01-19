@@ -346,10 +346,18 @@ public class Context {
 							Data[] newDataField = new Data[line.size() + dataField.length];
 							for (String variable : globalVariables.keySet()) {
 								int index = variableIndices.get(variable);
-								newDataField[index] = dataField[index % dataField.length];
+								newDataField[index % newDataField.length] = dataField[index % dataField.length];
 							}
+							for (String variable : currentVariables.keySet()) {
+								int index = variableIndices.get(variable);
+								newDataField[index % newDataField.length] = line.get(index % line.size());
+							}
+							newGlobalMatrix.add(newDataField);
 						}
 					}
+					globalMatrix = newGlobalMatrix;
+					break;
+				case 1:
 					
 				}
 				// TODO Update global variable values
