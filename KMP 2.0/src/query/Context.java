@@ -17,15 +17,18 @@ import persistence.EntryData;
 public class Context {
 
 	private ArrayList<Data[]> globalMatrix;
-	private ArrayList<ArrayList<Data>> currentMatrix;
 	private HashMap<String, HashSet<Data>> globalVariables;
+	
+	private ArrayList<ArrayList<Data>> currentMatrix;
 	private HashMap<String, HashSet<Data>> currentVariables;
+	
 	private HashMap<String, Integer> variableIndices;
-	private int index = 0;
+	
+	private int variableIndex = 0;
 	private Database database;
 	
 	private void incrementVariableIndex() {
-		index++;
+		variableIndex++;
 	}
 	public boolean containsKey(String identifier) {
 		return globalVariables.containsKey(identifier);
@@ -315,7 +318,7 @@ public class Context {
 					globalVariables.get(variable).retainAll(currentVariables.get(variable));
 				} else {
 					globalVariables.put(variable, currentVariables.get(variable));
-					variableIndices.put(variable, index);
+					variableIndices.put(variable, variableIndex);
 					incrementVariableIndex();
 					newVariables.add(variable);
 				}
@@ -339,17 +342,61 @@ public class Context {
 				// TODO Merge current matrix into global matrix
 				switch (newVariables.size()) {
 				case 0:
+					// TODO 
+					break;
+				case 1:
+					// TODO
+					break;
+				case 2:
+					String intersectingVariable = null;
+					for (String variable : currentVariables.keySet()) {
+						if (!newVariables.contains(variable)) {
+							intersectingVariable = variable;
+							break;
+						}
+					}
+					
+					if (intersectingVariable != null) {
+						int index = variableIndices.get(intersectingVariable);
+						ArrayList<Data[]> globalMatrixClone = (ArrayList<Data[]>) globalMatrix.clone();
+						for (Data[] datafield : globalMatrix) {
+							for (ArrayList<Data> line : currentMatrix) {
+								if (datafield[index % datafield.length] == line.get(index % line.size())) {
+									Data[] newDatafield = new Data[globalVariables.size()];
+									int newIndex = 0;
+									newDatafield[index % newDatafield.length] = datafield[index % datafield.length];
+									for (Data data : datafield) {
+										if (newIndex != index % newDatafield.length) {
+											newDatafield[newIndex++] = data;
+										} else {
+											newIndex++;
+										}
+									}
+									for (Data data : line) {
+										if (newIndex != index % newDatafield.length) {
+											newDatafield[newIndex++] = data;
+										} else {
+											newIndex++;
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					break;
+				case 3:
 					ArrayList<Data[]> newGlobalMatrix = new ArrayList<>();
 					for (Data[] dataField : globalMatrix) {
 						
 						for (ArrayList<Data> line : currentMatrix) {
 							Data[] newDataField = new Data[line.size() + dataField.length];
 							for (String variable : globalVariables.keySet()) {
-								int index = variableIndices.get(variable);
+								index = variableIndices.get(variable);
 								newDataField[index % newDataField.length] = dataField[index % dataField.length];
 							}
 							for (String variable : currentVariables.keySet()) {
-								int index = variableIndices.get(variable);
+								index = variableIndices.get(variable);
 								newDataField[index % newDataField.length] = line.get(index % line.size());
 							}
 							newGlobalMatrix.add(newDataField);
@@ -357,8 +404,7 @@ public class Context {
 					}
 					globalMatrix = newGlobalMatrix;
 					break;
-				case 1:
-					
+				
 				}
 				// TODO Update global variable values
 
