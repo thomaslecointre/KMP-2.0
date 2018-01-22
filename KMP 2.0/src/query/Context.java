@@ -345,7 +345,43 @@ public class Context {
 					// TODO 
 					break;
 				case 1:
-					// TODO
+					ArrayList<String> intersectingVariables = new ArrayList<>();
+					for (String variable : currentVariables.keySet()) {
+						if (!newVariables.contains(variable)) {
+							intersectingVariables.add(variable);
+						}
+					}
+					
+					if (intersectingVariables.size() == 2) {
+						// int index = variableIndices.get(intersectingVariable);
+						ArrayList<Data[]> globalMatrixClone = (ArrayList<Data[]>) globalMatrix.clone();
+						for (Data[] datafield : globalMatrix) {
+							for (ArrayList<Data> line : currentMatrix) {
+								if (datafield[index % datafield.length] == line.get(index % line.size())) {
+									Data[] newDatafield = new Data[globalVariables.size()];
+									int newIndex = 0;
+									newDatafield[index % newDatafield.length] = datafield[index % datafield.length];
+									for (Data data : datafield) {
+										if (newIndex != index % newDatafield.length) {
+											newDatafield[newIndex++] = data;
+										} else {
+											newIndex++;
+										}
+									}
+									for (Data data : line) {
+										if (newIndex != index % newDatafield.length) {
+											newDatafield[newIndex++] = data;
+										} else {
+											newIndex++;
+										}
+									}
+									globalMatrixClone.add(newDatafield);
+								}
+							}
+						}
+						globalMatrix = globalMatrixClone;
+					}
+					
 					break;
 				case 2:
 					String intersectingVariable = null;
@@ -379,9 +415,11 @@ public class Context {
 											newIndex++;
 										}
 									}
+									globalMatrixClone.add(newDatafield);
 								}
 							}
 						}
+						globalMatrix = globalMatrixClone;
 					}
 					
 					break;
@@ -392,11 +430,11 @@ public class Context {
 						for (ArrayList<Data> line : currentMatrix) {
 							Data[] newDataField = new Data[line.size() + dataField.length];
 							for (String variable : globalVariables.keySet()) {
-								index = variableIndices.get(variable);
+								int index = variableIndices.get(variable);
 								newDataField[index % newDataField.length] = dataField[index % dataField.length];
 							}
 							for (String variable : currentVariables.keySet()) {
-								index = variableIndices.get(variable);
+								int index = variableIndices.get(variable);
 								newDataField[index % newDataField.length] = line.get(index % line.size());
 							}
 							newGlobalMatrix.add(newDataField);
