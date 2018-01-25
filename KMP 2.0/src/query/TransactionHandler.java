@@ -1,21 +1,9 @@
 package query;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import model.Data;
 import model.Relation;
 import model.Subject;
 import persistence.Database;
 import persistence.EntryData;
-import query.spoof.SpoofData;
-import query.spoof.SpoofRelation;
-import query.spoof.SpoofSubject;
-import query.spoof.SpoofVariable;
 
 /**
  * This class is an intermediary request handling class and communicates with
