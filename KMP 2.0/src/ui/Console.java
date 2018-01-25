@@ -1,6 +1,9 @@
 package ui;
 
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import query.Result;
 import query.TransactionHandler;
@@ -156,7 +159,7 @@ public class Console implements Runnable {
 	 */
 	private String nextCommand(Modes currentMode) {
 		parentMode = currentMode;
-		boolean modeDetected, back;
+		boolean modeDetected, back, validEntry = false;
 		String command;
 		do {
 			promptMessage();
@@ -207,9 +210,162 @@ public class Console implements Runnable {
 					break;
 				} 
 			}
-		} while (!back && modeDetected);
+			if (!modeDetected) {
+				if (currentMode == Modes.INSERT) {
+					if (validateInsertion(command)) {
+						validEntry = true;
+					}
+				}
+				if (currentMode == Modes.QUERY) {
+					if (validateQuery(command)) {
+						validEntry = true;
+					}
+				}
+			}
+		} while ((!back && modeDetected) || !validEntry);
 		
 		return command;
+	}
+
+	/**
+	 * Checks if the Modes enum are present in the string in parameter 
+	 * @param s a text
+	 * @return a boolean if a Modes enum is present in the string
+	 */
+	private static boolean isKeyWord(String s) {
+		Modes[] modes = Modes.values();
+		StringBuilder keywords = new StringBuilder();
+		for (int i = 0; i < modes.length-1; i++) {
+			keywords.append(modes[i] + "|");
+		}
+		keywords.append(modes[modes.length-1]);
+		
+		Pattern pattern = Pattern.compile(keywords.toString(), Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(s);
+        return matcher.find();
+    }
+	
+	//TODO allow more characters
+	/**
+	 * Checks if the command is a valid insertion
+	 * @param command a string written by the user 
+	 * @return a boolean if the command is a valid insertion
+	 */
+	private static boolean validateInsertion(String command) {
+		String[] tokens = command.split(" ");
+		
+		//check the parity (number of words)
+		if (tokens.length < 3 || tokens.length % 2 == 0) {
+			System.out.println("Incorrect : number of words");
+			return false;
+		}
+		
+		//check the presence of keywords
+		for (String token : tokens) {
+			if (isKeyWord(token)) {
+				System.out.println("Incorrect : keyword in the tokens");
+				return false;
+			}
+		}
+		
+		//check tokens valid a-zA-Z_0-9
+		Pattern patternValidTokens = Pattern.compile("\\w+\\s+\\w+\\s+\\w+(\\s+\\w+\\s+\\w+)*");
+		Matcher matcherValidTokens = patternValidTokens.matcher(command);
+		if (!matcherValidTokens.matches()) {
+			System.out.println("Incorrect : command should be like 'a b c' or 'laurent is man is Married Sophie worksFor ENSISA'");
+			return false;
+		}
+		
+		//check ID : Spiderman ID PeterParker
+		Pattern patternPresenceID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);
+		Matcher matcherPresenceID = patternPresenceID.matcher(command);
+		if (matcherPresenceID.find()) {
+			System.out.println("Incorrect : 'id' is not allowed");
+			return false;
+		}
+		
+		return true;
+	}
+
+    //TODO allow more characters
+	/**
+	 * Checks if the command is a valid query
+	 * @param command a string written by the user
+	 * @return a boolean if the command is a valid query
+	 */
+	private static boolean validateQuery(String command) {
+		//check the global structure
+		if (command.split(":").length != 2) {
+			System.out.println("Incorrect : structure should be 'data : query' with no other ':'");
+			return false;
+		}
+		String data = command.split(":")[0], where = command.split(":")[1];
+		
+		//check the data structure
+		Pattern patternDataStructure = Pattern.compile("\\?\\w+\\s*(,\\s*\\?\\w+\\s*)*");
+		Matcher matcherDataStruture = patternDataStructure.matcher(data);
+		if (!matcherDataStruture.matches()) {
+			System.out.println("Incorrect : data should be like '?x' or '?x, ?y, ?z'");
+			return false;
+		}
+		
+		//check that variables have different names : ?x ?y ?x
+		Pattern patternDataVariable = Pattern.compile("\\\\?(\\w+)");
+		Matcher matcherDataVariable = patternDataVariable.matcher(data);
+		ArrayList<String> variables = new ArrayList<String>();
+		while(matcherDataVariable.find()) {
+            if (variables.contains(matcherDataVariable.group())) {
+        		System.out.println("Incorrect : same name in data " + matcherDataVariable.group());
+        		return false;
+            }
+            else variables.add(matcherDataVariable.group());
+        }
+		
+		//check the where structure
+		Pattern patternWhereStructure = Pattern.compile("(\\s+\\??\\w+){3}(\\s+&(\\s+\\??\\w+){3})*");
+		Matcher matcherWhereStruture = patternWhereStructure.matcher(where);
+		if (!matcherWhereStruture.matches()) {
+			System.out.println("Incorrect : where should be like '?x ?y ?z' or '?laurent is man & laurent ?worksFor ENSISA'");
+			return false;
+		}
+		
+		//check ID in where : ?x ID laurent
+		Pattern patternWhereID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);
+		Matcher matcherWhereID = patternWhereID.matcher(where);
+		if (matcherWhereID.find()) {
+			System.out.println("Incorrect : 'id' is not allowed");
+			return false;
+		}
+		
+		//check no variable unused : ?x, ?y : ?x is man
+		ArrayList<String> whereVariables = new ArrayList<String>();
+		Pattern patternUnusedVariable = Pattern.compile("\\\\?(\\w+)");
+		Matcher matcherUnusedVariable = patternUnusedVariable.matcher(where);
+		while(matcherUnusedVariable.find()) {
+            whereVariables.add(matcherUnusedVariable.group());
+        }
+		if (!whereVariables.containsAll(variables)) {
+			System.out.println("Incorrect : unused variable in the data, data : " + variables + " where : " + whereVariables);
+			return false;
+		}
+		
+		//check relation not placed at the extremity
+		ArrayList<String> ids = new ArrayList<String>(), relations = new ArrayList<String>(), subjects = new ArrayList<String>();
+		Pattern patternRelations = Pattern.compile("\\s*(\\??\\w+)\\s+(\\??\\w+)\\s+(\\??\\w+)(\\s+&)?");
+		Matcher matcherRelations = patternRelations.matcher(where);
+		while(matcherRelations.find()) {
+            ids.add(matcherRelations.group(1));
+			relations.add(matcherRelations.group(2));
+			subjects.add(matcherRelations.group(3));
+        }
+		for (String relation : relations) {
+			if (ids.contains(relation) || subjects.contains(relation)) {
+				System.out.println("Incorrect : conflict between relations and IDs/subjects");
+				return false;
+			}
+		}
+		
+		return true;
 	}
 
 	/**
@@ -260,5 +416,31 @@ public class Console implements Runnable {
 			
 		}
 	}
-
+	
+	/*
+	public static void main(String[] args) {
+		
+		
+		//insertion
+		System.out.println(validateInsertion("laurent isMarried Sophie"));
+		System.out.println(validateInsertion("laurent isMarried Sophie worksfor ENSISA"));
+		System.out.println(validateInsertion("laurent"));									//false length < 3
+		System.out.println(validateInsertion("laurent is Married Sophie"));					//false parity
+		System.out.println(validateInsertion("laurent insert Sophie"));						//false keywords
+		System.out.println(validateInsertion("laurent is/-*Married Sophie"));				//false invalid tokens
+		System.out.println(validateInsertion("Spiderman ID PeterParker"));					//false ID
+		
+		//query
+		System.out.println(validateQuery("?x : ?x is man"));
+		System.out.println(validateQuery("?x, ?y : ?x is man & ?x worksFor ?y"));
+		System.out.println(validateQuery("?x, ?y : ?x is  human:man"));						//false global structure
+		System.out.println(validateQuery("?x ?y : ?x is man & ?x worksFor ?y"));			//false data structure
+		System.out.println(validateQuery("?x, ?y, ?x : ?x is man & ?x worksFor ?y"));		//false data names
+		System.out.println(validateQuery("?x : ?x ID Spiderman"));							//false ID
+		System.out.println(validateQuery("?x, ?y : ?x is man"));							//false variable unused
+		System.out.println(validateQuery("?x, ?y : ?x is man & laurent ?y is"));			//false relation-extremity
+		
+		
+	}
+	*/
 }
