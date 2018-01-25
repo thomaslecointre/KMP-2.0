@@ -17,18 +17,18 @@ import persistence.EntryData;
 public class Context {
 
 	private ArrayList<Data[]> globalMatrix;
-	private HashMap<String, HashSet<Data>> globalVariables;
+	private HashMap<String, ArrayList<Data>> globalVariables;
 
 	private ArrayList<ArrayList<Data>> currentMatrix;
-	private HashMap<String, HashSet<Data>> currentVariables;
+	private HashMap<String, ArrayList<Data>> currentVariables;
 
 	private HashMap<String, Integer> currentVariableIndices;
 	private HashMap<String, Integer> globalVariableIndices;
-	
+
 	enum DataTypes {
 		SUBJECT, RELATION
 	}
-	
+
 	private HashMap<String, DataTypes> currentVariableTypes;
 	private HashMap<String, DataTypes> globalVariableTypes;
 
@@ -82,13 +82,14 @@ public class Context {
 		// Remove unnecessary whitespace around each condition statement
 		conditionStatements = Arrays.asList(conditionStatements).stream().map(String::trim).toArray(String[]::new);
 
-		// Clear previous variables
-		currentMatrix.clear();
-		currentVariables.clear();
-		currentVariableIndices.clear();
-
 		// Iterate through all the conditions of the WHERE statement
 		for (String conditionStatement : conditionStatements) {
+
+			// Clear previous variables
+			currentMatrix.clear();
+			currentVariables.clear();
+			currentVariableIndices.clear();
+			currentVariableTypes.clear();
 
 			String[] conditionStrings = conditionStatement.split(" ");
 			if (conditionStrings[0].isEmpty()) {
@@ -105,7 +106,7 @@ public class Context {
 				Set<Integer> keys;
 				// Search for existing values for left variable
 				if (globalVariables.containsKey(left)) {
-					HashSet<Data> values = globalVariables.get(left);
+					ArrayList<Data> values = globalVariables.get(left);
 					keys = new HashSet<>();
 					for (Data data : values) {
 						Subject subject = (Subject) data;
@@ -124,7 +125,7 @@ public class Context {
 						Set<Relation> relations;
 						// Search for existing values for middle variable
 						if (globalVariables.containsKey(middle)) {
-							HashSet<Data> values = (HashSet<Data>) globalVariables.get(middle);
+							ArrayList<Data> values = globalVariables.get(middle);
 							relations = new HashSet<>();
 							for (Data data : values) {
 								relations.add((Relation) data);
@@ -137,11 +138,11 @@ public class Context {
 							if (right.charAt(0) == '?') {
 								currentVariables.put(right, null);
 								currentVariableTypes.put(right, DataTypes.SUBJECT);
-								Set<Subject> subjects;
+								ArrayList<Subject> subjects;
 								// Search for existing values for right variable
 								if (globalVariables.containsKey(right)) {
-									HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
-									subjects = new HashSet<>();
+									ArrayList<Data> values = globalVariables.get(right);
+									subjects = new ArrayList<>();
 									for (Data data : values) {
 										subjects.add((Subject) data);
 									}
@@ -181,12 +182,12 @@ public class Context {
 								if (right.charAt(0) == '?') {
 									currentVariables.put(right, null);
 									currentVariableTypes.put(right, DataTypes.SUBJECT);
-									Set<Subject> subjects;
+									ArrayList<Subject> subjects;
 									// Search for existing values for right
 									// variable
 									if (globalVariables.containsKey(right)) {
-										HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
-										subjects = new HashSet<>();
+										ArrayList<Data> values = globalVariables.get(right);
+										subjects = new ArrayList<>();
 										for (Data data : values) {
 											subjects.add((Subject) data);
 										}
@@ -204,10 +205,13 @@ public class Context {
 								} else {
 									Subject subject = database.findSubject(right);
 									if (subject != null) {
-										if (entryData.getSubjects(relation).contains(subject)) {
+										ArrayList<Subject> subjects = entryData.getSubjects(relation);
+										if (subjects.contains(subject)) {
 											ArrayList<Data> line = new ArrayList<>();
 											line.add(database.getID(key));
 											currentMatrix.add(line);
+										} else {
+											System.out.println("EntryData did not contain subject");
 										}
 									}
 								}
@@ -226,7 +230,7 @@ public class Context {
 						Set<Relation> relations;
 						// Search for existing values for middle variable
 						if (globalVariables.containsKey(middle)) {
-							HashSet<Data> values = (HashSet<Data>) globalVariables.get(middle);
+							ArrayList<Data> values = globalVariables.get(middle);
 							relations = new HashSet<>();
 							for (Data data : values) {
 								relations.add((Relation) data);
@@ -241,11 +245,11 @@ public class Context {
 							if (right.charAt(0) == '?') {
 								currentVariables.put(right, null);
 								currentVariableTypes.put(right, DataTypes.SUBJECT);
-								Set<Subject> subjects;
+								ArrayList<Subject> subjects;
 								// Search for existing values for right variable
 								if (globalVariables.containsKey(right)) {
-									HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
-									subjects = new HashSet<>();
+									ArrayList<Data> values = globalVariables.get(right);
+									subjects = new ArrayList<>();
 									for (Data data : values) {
 										subjects.add((Subject) data);
 									}
@@ -283,12 +287,12 @@ public class Context {
 								if (right.charAt(0) == '?') {
 									currentVariables.put(right, null);
 									currentVariableTypes.put(right, DataTypes.SUBJECT);
-									Set<Subject> subjects;
+									ArrayList<Subject> subjects;
 									// Search for existing values for right
 									// variable
 									if (globalVariables.containsKey(right)) {
-										HashSet<Data> values = (HashSet<Data>) globalVariables.get(right);
-										subjects = new HashSet<>();
+										ArrayList<Data> values = globalVariables.get(right);
+										subjects = new ArrayList<>();
 										for (Data data : values) {
 											subjects.add((Subject) data);
 										}
@@ -299,6 +303,7 @@ public class Context {
 										if (entryData.getSubjects(relation).contains(subject)) {
 											ArrayList<Data> line = new ArrayList<>();
 											line.add(subject);
+											currentMatrix.add(line);
 										}
 									}
 								} else {
@@ -313,7 +318,7 @@ public class Context {
 			// Aggregate current variable values
 			int currentVariableIndex = 0;
 			for (String variable : currentVariables.keySet()) {
-				HashSet<Data> variableValues = new HashSet<>();
+				ArrayList<Data> variableValues = new ArrayList<>();
 				for (ArrayList<Data> line : currentMatrix) {
 					Data data = line.get(currentVariableIndex);
 					variableValues.add(data);
@@ -326,7 +331,6 @@ public class Context {
 			// pool
 			ArrayList<String> newVariables = new ArrayList<>();
 			// Clear previous indices
-			currentVariableIndices.clear();
 			int currentIndex = 0;
 			for (String variable : currentVariables.keySet()) {
 				if (globalVariables.containsKey(variable)) {
@@ -334,12 +338,12 @@ public class Context {
 				} else {
 					globalVariables.put(variable, currentVariables.get(variable));
 					globalVariableIndices.put(variable, globalVariableIndex);
-					currentVariableIndices.put(variable, currentIndex++);
 					incrementVariableIndex();
 					newVariables.add(variable);
 				}
+				currentVariableIndices.put(variable, currentIndex++);
 			}
-			
+
 			// Udpate global variables with types
 			for (String variable : currentVariableTypes.keySet()) {
 				globalVariableTypes.put(variable, currentVariableTypes.get(variable));
@@ -349,113 +353,34 @@ public class Context {
 			// values
 			if (globalMatrix.size() > 0) {
 				// Remove entries not in accordance with global variable values
-				int globalVariableIndex = 0;
-				for (String variable : globalVariables.keySet()) {
+				
+				/*
+				for (String variable : currentVariables.keySet()) {
 					ArrayList<Data[]> restrictedGlobalMatrix = (ArrayList<Data[]>) globalMatrix.clone();
 					for (Data[] datafield : globalMatrix) {
-						if (!globalVariables.get(variable).contains(datafield[globalVariableIndex])) {
+						int globalVariableIndex_ = globalVariableIndices.get(variable);
+						if (!globalVariables.get(variable).contains(datafield[globalVariableIndex_])) {
 							restrictedGlobalMatrix.remove(datafield);
 						}
 					}
 					globalMatrix = restrictedGlobalMatrix;
-					globalVariableIndex++;
 				}
-
+				*/
+				
+				// Integrate new entries
 				ArrayList<Data[]> newGlobalMatrix;
-				switch (newVariables.size()) {
+				
+				ArrayList<String> intersectingVariables = new ArrayList<>();
+				for (String variable : currentVariables.keySet()) {
+					if (!newVariables.contains(variable)) {
+						intersectingVariables.add(variable);
+					}
+				}
+				
+				switch (intersectingVariables.size()) {
+				
+				// Cartesian product
 				case 0:
-					newGlobalMatrix = new ArrayList<>();
-					for (Data[] datafield : globalMatrix) {
-						for (ArrayList<Data> line : currentMatrix) {
-							int variablesValid = 0;
-							for (String variable : currentVariables.keySet()) {
-								int globalVariableIndex_ = globalVariableIndices.get(variable);
-								int currentVariableIndex_ = currentVariableIndices.get(variable);
-								if (datafield[globalVariableIndex_].equals(line.get(currentVariableIndex_))) {
-									variablesValid++;
-								}
-							}
-							if (variablesValid == 3) {
-								newGlobalMatrix.add(datafield);
-							}
-						}
-					}
-					globalMatrix = newGlobalMatrix;
-					break;
-				case 1:
-					ArrayList<String> intersectingVariables = new ArrayList<>();
-					for (String variable : currentVariables.keySet()) {
-						if (!newVariables.contains(variable)) {
-							intersectingVariables.add(variable);
-						}
-					}
-
-					if (intersectingVariables.size() == 2) {
-						newGlobalMatrix = new ArrayList<>();
-						for (Data[] datafield : globalMatrix) {
-							for (ArrayList<Data> line : currentMatrix) {
-								int variablesValid = 0;
-								for (String variable : intersectingVariables) {
-									int globalVariableIndex_ = globalVariableIndices.get(variable);
-									int currentVariableIndex_ = currentVariableIndices.get(variable);
-									if (datafield[globalVariableIndex_].equals(line.get(currentVariableIndex_))) {
-										variablesValid++;
-									}
-								}
-								if (variablesValid == 2) {
-									Data[] newDatafield = new Data[globalVariables.size()];
-									for (String variable : globalVariables.keySet()) {
-										int globalVariableIndex_ = globalVariableIndices.get(variable);
-										newDatafield[globalVariableIndex_] = datafield[globalVariableIndex_];
-									}
-									for (String variable : currentVariables.keySet()) {
-										int globalVariableIndex_ = globalVariableIndices.get(variable);
-										int currentVariableIndex_ = currentVariableIndices.get(variable);
-										newDatafield[globalVariableIndex_] = line.get(currentVariableIndex_);
-									}
-									newGlobalMatrix.add(newDatafield);
-								}
-							}
-						}
-						globalMatrix = newGlobalMatrix;
-					}
-
-					break;
-				case 2:
-					String intersectingVariable = null;
-					for (String variable : currentVariables.keySet()) {
-						if (!newVariables.contains(variable)) {
-							intersectingVariable = variable;
-							break;
-						}
-					}
-
-					if (intersectingVariable != null) {
-						int globalVariableIndex_ = globalVariableIndices.get(intersectingVariable);
-						int currentVariableIndex_ = currentVariableIndices.get(intersectingVariable);
-						newGlobalMatrix = new ArrayList<>();
-						for (Data[] datafield : globalMatrix) {
-							for (ArrayList<Data> line : currentMatrix) {
-								if (datafield[globalVariableIndex_].equals(line.get(currentVariableIndex_))) {
-									Data[] newDatafield = new Data[globalVariables.size()];
-									for (String variable : globalVariables.keySet()) {
-										int globalVariableIndex__ = globalVariableIndices.get(variable);
-										newDatafield[globalVariableIndex__] = datafield[globalVariableIndex__];
-									}
-									for (String variable : currentVariables.keySet()) {
-										int globalVariableIndex__ = globalVariableIndices.get(variable);
-										int currentVariableIndex__ = currentVariableIndices.get(variable);
-										newDatafield[globalVariableIndex__] = line.get(currentVariableIndex__);
-									}
-									newGlobalMatrix.add(newDatafield);
-								}
-							}
-						}
-						globalMatrix = newGlobalMatrix;
-					}
-
-					break;
-				case 3:
 					newGlobalMatrix = new ArrayList<>();
 					for (Data[] datafield : globalMatrix) {
 						for (ArrayList<Data> line : currentMatrix) {
@@ -474,32 +399,118 @@ public class Context {
 					}
 					globalMatrix = newGlobalMatrix;
 					break;
-
-				}
-
-				for (String variable : globalVariables.keySet()) {
-					int globalVariableIndex_ = globalVariableIndices.get(variable);
-					HashSet<Data> newVariableValues = new HashSet<>();
-					for (Data[] datafield : globalMatrix) {
-						newVariableValues.add(datafield[globalVariableIndex_]);
+				
+				case 1:
+					String intersectingVariable = intersectingVariables.get(0);
+					
+					if (intersectingVariable != null) {
+						int globalVariableIndex_ = globalVariableIndices.get(intersectingVariable);
+						int currentVariableIndex_ = currentVariableIndices.get(intersectingVariable);
+						newGlobalMatrix = new ArrayList<>();
+						for (Data[] datafield : globalMatrix) {
+							for (ArrayList<Data> line : currentMatrix) {
+								if (datafield[globalVariableIndex_].equals(line.get(currentVariableIndex_))) {
+									Data[] newDatafield = new Data[globalVariables.size()];
+									for (String variable : globalVariables.keySet()) {
+										if (!newVariables.contains(variable)) {
+											int globalVariableIndex__ = globalVariableIndices.get(variable);
+											newDatafield[globalVariableIndex__] = datafield[globalVariableIndex__];
+										}
+									}
+									for (String variable : currentVariables.keySet()) {
+										int globalVariableIndex__ = globalVariableIndices.get(variable);
+										int currentVariableIndex__ = currentVariableIndices.get(variable);
+										newDatafield[globalVariableIndex__] = line.get(currentVariableIndex__);
+									}
+									newGlobalMatrix.add(newDatafield);
+								}
+							}
+						}
+						globalMatrix = newGlobalMatrix;
 					}
-					globalVariables.replace(variable, newVariableValues);
+					break;
+				case 2:
+					if (intersectingVariables.size() == 2) {
+						newGlobalMatrix = new ArrayList<>();
+						for (Data[] datafield : globalMatrix) {
+							for (ArrayList<Data> line : currentMatrix) {
+								int variablesValid = 0;
+								for (String variable : intersectingVariables) {
+									int globalVariableIndex_ = globalVariableIndices.get(variable);
+									int currentVariableIndex_ = currentVariableIndices.get(variable);
+									if (datafield[globalVariableIndex_].equals(line.get(currentVariableIndex_))) {
+										variablesValid++;
+									}
+								}
+								if (variablesValid == 2) {
+									Data[] newDatafield = new Data[globalVariables.size()];
+									for (String variable : globalVariables.keySet()) {
+										if (!newVariables.contains(variable)) {
+											int globalVariableIndex_ = globalVariableIndices.get(variable);
+											newDatafield[globalVariableIndex_] = datafield[globalVariableIndex_];
+										}
+									}
+									for (String variable : currentVariables.keySet()) {
+										int globalVariableIndex_ = globalVariableIndices.get(variable);
+										int currentVariableIndex_ = currentVariableIndices.get(variable);
+										newDatafield[globalVariableIndex_] = line.get(currentVariableIndex_);
+									}
+									newGlobalMatrix.add(newDatafield);
+								}
+							}
+						}
+						globalMatrix = newGlobalMatrix;
+					}
+					
+					break;
+				case 3:
+					newGlobalMatrix = new ArrayList<>();
+					for (Data[] datafield : globalMatrix) {
+						for (ArrayList<Data> line : currentMatrix) {
+							int variablesValid = 0;
+							for (String variable : currentVariables.keySet()) {
+								int globalVariableIndex_ = globalVariableIndices.get(variable);
+								int currentVariableIndex_ = currentVariableIndices.get(variable);
+								if (datafield[globalVariableIndex_].equals(line.get(currentVariableIndex_))) {
+									variablesValid++;
+								}
+							}
+							if (variablesValid == 3) {
+								newGlobalMatrix.add(datafield);
+							}
+						}
+					}
+					globalMatrix = newGlobalMatrix;
+					break;
+
 				}
+				
+				
 			} else { // New variable values arriving, the global matrix is empty
 				for (ArrayList<Data> line : currentMatrix) {
-					Data[] datafield = (Data[]) line.toArray();
+					Data[] datafield = line.toArray(new Data[line.size()]);
 					globalMatrix.add(datafield);
 				}
 			}
+			
+			// Update global variables according to global matrix
+			for (String variable : globalVariables.keySet()) {
+				int globalVariableIndex_ = globalVariableIndices.get(variable);
+				ArrayList<Data> newVariableValues = new ArrayList<>();
+				for (Data[] datafield : globalMatrix) {
+					newVariableValues.add(datafield[globalVariableIndex_]);
+				}
+				globalVariables.replace(variable, newVariableValues);
+			}
 		}
-		
+
 		Result result = new Result(database);
 		for (String selectorString : selectorStrings) {
-			HashSet<Data> datafield = globalVariables.get(selectorString);
+			ArrayList<Data> datafield = globalVariables.get(selectorString);
 			result.putData(selectorString, datafield);
 			result.putDataType(selectorString, globalVariableTypes.get(selectorString));
 		}
-		
+
 		return result;
 
 	}

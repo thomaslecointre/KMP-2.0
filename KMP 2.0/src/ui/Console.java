@@ -34,7 +34,7 @@ public class Console implements Runnable {
 			switch (this) {
 			case INSERT:
 				System.out.println(
-						"\nThe parity of a word's location matters. Odd indexed words are subjects. Even indexed words are entry headers.");
+						"\nThe parity of a word's index matters. Odd indexed words are subjects. Even indexed words are entry headers.");
 				System.out.println("\nAn entry is comprised of a primary key, headers and values. A triple is a combination of the primary key, a header and its corresponding value.");
 				break;
 			case QUERY:
@@ -105,7 +105,7 @@ public class Console implements Runnable {
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
-				if(mode == Modes.UNDO || mode == Modes.RESET || mode == Modes.BACK) {
+				if(mode == Modes.UNDO || mode == Modes.RESET) {
 					return false;
 				}
 				this.mode = mode;
@@ -178,9 +178,9 @@ public class Console implements Runnable {
 						currentMode.helpMessage();
 						break;
 					case BACK:
-						this.mode = Modes.BACK;
-						back = true;
+						this.mode = null;
 						parentMode = null;
+						back = true;
 						listOfCommands();
 						break;
 					case UNDO:
@@ -222,7 +222,7 @@ public class Console implements Runnable {
 					}
 				}
 			}
-		} while ((!back && modeDetected) || !validEntry);
+		} while (!back && !validEntry);
 		
 		return command;
 	}

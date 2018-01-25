@@ -1,9 +1,9 @@
 package persistence;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 import model.ID;
@@ -21,7 +21,7 @@ public class EntryData implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	private ID id;
-	private HashMap<Relation, HashSet<Subject>> relationMap;
+	private HashMap<Relation, ArrayList<Subject>> relationMap;
 
 	public EntryData() {
 		relationMap = new HashMap<>();
@@ -38,10 +38,11 @@ public class EntryData implements Serializable {
 
 	/**
 	 * Returns a collection of all sets of subjects from the relationMap field.
+	 * @return 
 	 * 
 	 * @return a collection of sets of subjects.
 	 */
-	public Collection<HashSet<Subject>> subjects() {
+	public Collection<ArrayList<Subject>> subjects() {
 		return relationMap.values();
 	}
 
@@ -55,12 +56,12 @@ public class EntryData implements Serializable {
 	 *            an instance of Subject.
 	 */
 	public void put(Relation relation, Subject subject) {
-		HashSet<Subject> subjects = relationMap.get(relation);
+		ArrayList<Subject> subjects = relationMap.get(relation);
 		if (subjects != null) {
 			subjects.add(subject);
 			relationMap.put(relation, subjects);
 		} else {
-			subjects = new HashSet<>();
+			subjects = new ArrayList<>();
 			subjects.add(subject);
 			relationMap.put(relation, subjects);
 		}
@@ -83,9 +84,10 @@ public class EntryData implements Serializable {
 	 * 
 	 * @param relation
 	 *            an instance of Relation
+	 * @return 
 	 * @return a set of subjects.
 	 */
-	public HashSet<Subject> getSubjects(Relation relation) {
+	public ArrayList<Subject> getSubjects(Relation relation) {
 		return relationMap.get(relation);
 	}
 
@@ -107,7 +109,7 @@ public class EntryData implements Serializable {
 		res.append("id => ").append(this.getIdAsString()).append(" | ");
 		for (Relation relation : this.getRelations()) {
 			res.append(relation.getId()).append(" => ");
-			HashSet<Subject> subjects = this.getSubjects(relation);
+			ArrayList<Subject> subjects = this.getSubjects(relation);
 			if (subjects.size() > 1) {
 				res.append("{ ");
 				for (Subject subject : subjects) {

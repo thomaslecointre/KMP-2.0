@@ -1,14 +1,14 @@
 package query;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import model.Data;
 import persistence.Database;
 
 public class Result {
 
-	private HashMap<String, HashSet<Data>> selectorMappings;
+	private HashMap<String, ArrayList<Data>> selectorMappings;
 	private HashMap<String, Context.DataTypes> selectorTypes;
 	private Database database;
 	
@@ -18,7 +18,7 @@ public class Result {
 		selectorTypes = new HashMap<>();
 	}
 
-	protected void putData(String identifier, HashSet<Data> datafield) {
+	protected void putData(String identifier, ArrayList<Data> datafield) {
 		selectorMappings.put(identifier, datafield);
 	}
 	
@@ -34,15 +34,15 @@ public class Result {
 		for (String identifier : selectorMappings.keySet()) {
 			
 			res.append("\n\n").append(identifier);
-			HashSet<Data> datafield = selectorMappings.get(identifier);
+			ArrayList<Data> datafield = selectorMappings.get(identifier);
 			
 			res.append("\n[");
 			
 			for (Data data : datafield) {
 				if (selectorTypes.get(identifier).equals(Context.DataTypes.SUBJECT)) {
-					res.append("\n\t").append("Key : ").append(database.findKey(identifier)).append(" => ").append(identifier);
+					res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
 				} else if (selectorTypes.get(identifier).equals(Context.DataTypes.RELATION)) {
-					res.append("\n\t").append("Relation : ").append(identifier);
+					res.append("\n\t").append("Relation : ").append(data);
 				}
 			}
 			

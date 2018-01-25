@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 import model.Data;
@@ -25,7 +25,7 @@ public class Database implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private HashSet<Data> objects;
+	private ArrayList<Data> objects;
 	private HashMap<Integer, EntryData> table;
 	private int primaryIndex = 1;
 
@@ -40,7 +40,7 @@ public class Database implements Serializable {
 
 	public Database() {
 		table = new HashMap<>();
-		objects = new HashSet<>();
+		objects = new ArrayList<>();
 	}
 
 	/**
@@ -181,7 +181,7 @@ public class Database implements Serializable {
 			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
 			for (Relation relation : entryData.getRelations()) {
 				res.append(relation.getId()).append(" => ");
-				HashSet<Subject> subjects = entryData.getSubjects(relation);
+				ArrayList<Subject> subjects = entryData.getSubjects(relation);
 				if (subjects.size() > 1) {
 					res.append("{ ");
 					for (Subject subject : subjects) {
