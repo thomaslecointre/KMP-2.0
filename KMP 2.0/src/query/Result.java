@@ -3,21 +3,27 @@ package query;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import model.Relation;
-import model.Subject;
-import query.spoof.SpoofSubject;
-import query.spoof.SpoofVariable;
+import model.Data;
+import persistence.Database;
 
 public class Result {
 
-	private HashMap<String, Object> selectorMappings = new HashMap<>();
-
-	protected void put(String identifier, Object object) {
-		selectorMappings.put(identifier, object);
+	private HashMap<String, HashSet<Data>> selectorMappings;
+	private HashMap<String, Context.DataTypes> selectorTypes;
+	private Database database;
+	
+	protected Result(Database database) {
+		this.database = database;
+		selectorMappings = new HashMap<>();
+		selectorTypes = new HashMap<>();
 	}
 
-	public HashMap<String, Object> getSelectorMappings() {
-		return selectorMappings;
+	protected void putData(String identifier, HashSet<Data> datafield) {
+		selectorMappings.put(identifier, datafield);
+	}
+	
+	protected void putDataType(String identifier, Context.DataTypes dataType) {
+		selectorTypes.put(identifier, dataType);
 	}
 
 	@Override
@@ -28,56 +34,19 @@ public class Result {
 		for (String identifier : selectorMappings.keySet()) {
 			
 			res.append("\n\n").append(identifier);
-			Object object = selectorMappings.get(identifier);
-			SpoofVariable spoofResults = null;
-			HashSet<Relation> relations = null;
+			HashSet<Data> datafield = selectorMappings.get(identifier);
 			
-			try {
-				spoofResults = (SpoofVariable) object;
-			} catch (ClassCastException e) {
-				relations = (HashSet<Relation>) object;
-			} finally {
-				res.append("\n[");
-				if (spoofResults != null) {
-					if (!spoofResults.usedOnTheRight()) {
-						for (SpoofSubject spoofResult : spoofResults.getSpoofDataSet()) {
-							res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
-							Subject id = spoofResult.getID();
-							res.append("ID : ").append(id);
-						}
-					} else {
-						if (!spoofResults.isIdsTransferred()) {
-							for (SpoofSubject spoofResult : spoofResults.getSpoofDataSet()) {
-								res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
-								HashSet<Subject> subjects = spoofResult.getSubjects();
-								if (subjects.size() > 1) {
-									res.append("Subjects : { ");
-									for(Subject subject : subjects) {
-										res.append(subject).append(' ');
-									}
-									res.append('}');
-								} else if (subjects.size() == 1) {
-									res.append("Subject : ").append(subjects.iterator().next());
-								} else {
-									res.append("Subjects : NO SUBJECTS FOUND! ");
-								}
-							}
-						} else {
-							for (SpoofSubject spoofResult : spoofResults.getSpoofDataSet()) {
-								res.append("\n\t").append("Key : ").append(spoofResult.getKey()).append(" => ");
-								Subject id = spoofResult.getID();
-								res.append("ID : ").append(id);
-							}
-						}
-					}
+			res.append("\n[");
+			
+			for (Data data : datafield) {
+				if (selectorTypes.get(identifier).equals(Context.DataTypes.SUBJECT)) {
+					res.append("\n\t").append("Key : ").append(database.findKey(identifier)).append(" => ").append(identifier);
+				} else if (selectorTypes.get(identifier).equals(Context.DataTypes.RELATION)) {
+					res.append("\n\t").append("Relation : ").append(identifier);
 				}
-				if (relations != null) {
-					for (Relation relation : relations) {
-						res.append("\n\t").append("Relation : ").append(relation);
-					}
-				}
-				res.append("\n]");
 			}
+			
+			res.append("\n]");
 		}
 		return res.toString();
 	}
