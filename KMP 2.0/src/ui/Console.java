@@ -386,6 +386,7 @@ public class Console implements Runnable {
 						String insertion = nextCommand(Modes.INSERT);
 						if (insertion != null) {
 							transactionHandler.requestInsert(insertion);
+							transactionHandler.requestShow();
 						} else {
 							resetPromptMessage();
 						}

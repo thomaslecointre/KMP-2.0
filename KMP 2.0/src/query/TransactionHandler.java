@@ -86,7 +86,6 @@ public class TransactionHandler {
 			database.insert(entryData);
 		}
 
-		requestShow();
 	}
 
 	/**
