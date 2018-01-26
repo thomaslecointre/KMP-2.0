@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -250,8 +253,10 @@ public class Database implements Serializable {
 		return primaryIndex;
 	}
 
-	public String createPath(String fileName) {
-		return System.getProperty("user.dir") + "/dataSerialized/" + fileName;
+	public String createPath(String fileName) throws IOException {
+		String path = System.getProperty("user.home") + "/KMP_dataSerialized/";
+		Files.createDirectories(Paths.get(path));
+		return path + fileName;
 	}
 
 	public void writeObject(String fileName) throws IOException {
@@ -260,7 +265,7 @@ public class Database implements Serializable {
 		out.writeObject(this);
 		out.close();
 		fileOut.close();
-		System.out.printf("data serialized in " + createPath(fileName));
+		System.out.printf("\ndata serialized in " + createPath(fileName));
 	}
 
 	public Database readObject(Database db, String fileName) throws IOException, ClassNotFoundException {
@@ -284,7 +289,7 @@ public class Database implements Serializable {
 		return table.get(key).getID().getSubject();
 	}
 
-	/*
+	
 	public static void main(String[] args) {
 		Database db = new Database();
 		EntryData ed = new EntryData();
@@ -320,5 +325,5 @@ public class Database implements Serializable {
 		}
 		System.out.println(data2.toString());
 	}
-	*/
+	
 }
