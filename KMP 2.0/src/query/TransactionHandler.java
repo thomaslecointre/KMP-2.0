@@ -1,7 +1,8 @@
 package query;
 
 import java.io.IOException;
-
+import java.util.ArrayList;
+import model.Data;
 import model.Relation;
 import model.Subject;
 import persistence.Database;
@@ -84,11 +85,14 @@ public class TransactionHandler {
 		if (splitInsertion.length > 1) {
 			for (int index = 1; index + 1 < splitInsertion.length; index++) {
 				Relation relation = database.findRelation(splitInsertion[index]);
-
+				boolean applyRelationProperties = false;
 				if (relation == null) {
 					relation = new Relation(splitInsertion[index]);
 					database.addRelation(relation);
+				} else {
+					applyRelationProperties = true;
 				}
+				
 				Subject subject = database.findSubject(splitInsertion[++index]);
 
 				if (subject == null) {
@@ -97,6 +101,10 @@ public class TransactionHandler {
 				}
 
 				entryData.put(relation, subject);
+				
+				if (applyRelationProperties) {
+					applyRelationProperties(relation);
+				}
 			}
 		}
 	
@@ -104,6 +112,57 @@ public class TransactionHandler {
 			database.insert(entryData);
 		}
 		
+	}
+
+	private void applyRelationProperties(Relation relation) {
+		for (Relation.Properties property : Relation.Properties.values()) {
+			if (relation.isPropertyActive(property)) {
+				switch (property) {
+				case SYMMETRY:
+					applySymmetry(relation);
+					break;
+				case TRANSITIVITY:
+					applyTransitivity(relation);
+					break;
+				}
+			}
+		}
+	}
+
+	private void applySymmetry(Relation relation) {
+		int[] totalNumberOfEntries = {0, 0};
+		int[] previousTotalNumberOfEntries = null;
+		String query = "?X, ?Y : ?X " + relation + " ?Y"; 
+		do {
+			previousTotalNumberOfEntries = totalNumberOfEntries;
+			Result result = requestQuery(query);
+			for (int index = 0; index < result.size(); index++) {
+				ArrayList<Data> first = result.getData("?X");
+				totalNumberOfEntries[0] = first.size();
+				ArrayList<Data> second = result.getData("?Y");
+				totalNumberOfEntries[1] = second.size();
+				String insertion = second.get(index) + " " + relation + " " + first.get(index);
+				requestInsert(insertion);
+			}
+		} while(totalNumberOfEntries[0] != previousTotalNumberOfEntries[0] || totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
+	}
+	
+	private void applyTransitivity(Relation relation) {
+		int[] totalNumberOfEntries = {0, 0};
+		int[] previousTotalNumberOfEntries = null;
+		String query = "?X, ?Z : ?X " + relation + " ?Y & ?Y " + relation + " ?Z"; 
+		do {
+			previousTotalNumberOfEntries = totalNumberOfEntries;
+			Result result = requestQuery(query);
+			for (int index = 0; index < result.size(); index++) {
+				ArrayList<Data> first = result.getData("?X");
+				totalNumberOfEntries[0] = first.size();
+				ArrayList<Data> second = result.getData("?Z");
+				totalNumberOfEntries[1] = second.size();
+				String insertion = second.get(index) + " " + relation + " " + first.get(index);
+				requestInsert(insertion);
+			}
+		} while(totalNumberOfEntries[0] != previousTotalNumberOfEntries[0] || totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
 	}
 
 	/**
@@ -123,6 +182,36 @@ public class TransactionHandler {
 
 	public DatabaseSerializer getDatabaseSerializer() {
 		return databaseSerializer;
+	}
+
+	// TODO
+	public void updateRelation(String command) {
+		String[] splittedCommand = command.split(" ");
+		Relation relation = database.findRelation(splittedCommand[0]);
+		String qualifier = splittedCommand[1];
+		String propertyString = splittedCommand[2];
+		Relation.Properties property = Relation.Properties.valueOf(propertyString.toUpperCase());
+		if (qualifier.equals("is")) {
+			relation.setProperty(property, true);
+			applyRelationProperties(relation);
+			requestShow();
+		} else if (qualifier.equals("not")) {
+			relation.setProperty(property, false);
+		}
+	}
+	
+	public String showRelations() {
+		ArrayList<Relation> relations = database.getAllRelations();
+		StringBuilder res = new StringBuilder();
+		res.append("\nRelations : ");
+		for (Relation relation : relations) {
+			res.append("\n\t").append(relation);
+		}
+		res.append("\nProperties : ");
+		for (Relation.Properties property : Relation.Properties.values()) {
+			res.append("\n\t").append(property);
+		}
+		return res.toString();
 	}
 
 }
