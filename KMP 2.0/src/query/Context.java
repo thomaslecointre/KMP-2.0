@@ -352,20 +352,6 @@ public class Context {
 			// Update the global matrix in accordance with global variable
 			// values
 			if (globalMatrix.size() > 0) {
-				// Remove entries not in accordance with global variable values
-				
-				/*
-				for (String variable : currentVariables.keySet()) {
-					ArrayList<Data[]> restrictedGlobalMatrix = (ArrayList<Data[]>) globalMatrix.clone();
-					for (Data[] datafield : globalMatrix) {
-						int globalVariableIndex_ = globalVariableIndices.get(variable);
-						if (!globalVariables.get(variable).contains(datafield[globalVariableIndex_])) {
-							restrictedGlobalMatrix.remove(datafield);
-						}
-					}
-					globalMatrix = restrictedGlobalMatrix;
-				}
-				*/
 				
 				// Integrate new entries
 				ArrayList<Data[]> newGlobalMatrix;

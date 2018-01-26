@@ -1,5 +1,7 @@
 package query;
 
+import java.util.ArrayList;
+
 import model.Relation;
 import model.Subject;
 import persistence.Database;
@@ -101,6 +103,27 @@ public class TransactionHandler {
 
 	public Database getDatabase() {
 		return database;
+	}
+
+	// TODO
+	public void updateRelation(String command) {
+		String[] splittedCommand = command.split(" ");
+		Relation relation = database.findRelation(splittedCommand[0]);
+		String qualifier = splittedCommand[1];
+	}
+	
+	public String showRelations() {
+		ArrayList<Relation> relations = database.getAllRelations();
+		StringBuilder res = new StringBuilder();
+		res.append("\nRelations : ");
+		for (Relation relation : relations) {
+			res.append("\n\t").append(relation);
+		}
+		res.append("\nProperties : ");
+		for (Relation.Properties property : Relation.Properties.values()) {
+			res.append("\n\t").append(property);
+		}
+		return res.toString();
 	}
 
 }

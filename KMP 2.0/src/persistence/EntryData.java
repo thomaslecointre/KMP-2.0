@@ -58,7 +58,9 @@ public class EntryData implements Serializable {
 	public void put(Relation relation, Subject subject) {
 		ArrayList<Subject> subjects = relationMap.get(relation);
 		if (subjects != null) {
-			subjects.add(subject);
+			if (!subjects.contains(subject)) {
+				subjects.add(subject);
+			}
 			relationMap.put(relation, subjects);
 		} else {
 			subjects = new ArrayList<>();

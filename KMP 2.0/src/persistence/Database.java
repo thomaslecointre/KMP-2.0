@@ -7,7 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -177,7 +176,12 @@ public class Database implements Serializable {
 	public String toString() {
 
 		StringBuilder res = new StringBuilder();
-		res.append("\nWhat's in the database?\n");
+		if (objects.size() > 0) {
+			res.append("\nWhat's in the database?\n");
+		} else {
+			return "Nothing is in the database.";
+		}
+		
 		for (Integer key : table.keySet()) {
 			res.append("\nindex => ").append(key).append(" | ");
 			EntryData entryData = table.get(key);
@@ -324,6 +328,16 @@ public class Database implements Serializable {
 			e.printStackTrace();
 		}
 		System.out.println(data2.toString());
+	}
+
+	public ArrayList<Relation> getAllRelations() {
+		ArrayList<Relation> relations = new ArrayList<>();
+		for (Data data : objects) {
+			if (data instanceof Relation) {
+				relations.add((Relation) data);
+			}
+		}
+		return relations;
 	}
 	
 }

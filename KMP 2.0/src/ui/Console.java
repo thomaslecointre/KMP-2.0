@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import model.Relation;
 import query.Result;
 import query.TransactionHandler;
 
@@ -21,7 +22,7 @@ public class Console implements Runnable {
 	 * Enumeration of all types of commands the user can use.
 	 */
 	private enum Modes {
-		INSERT("insert"), QUERY("query"), HELP("help"), BACK("back"), UNDO ("undo"), RESET("reset"), SHOW("show"), QUIT(
+		INSERT("insert"), QUERY("query"), INSPECT_RELATIONS("inspect relations"), HELP("help"), BACK("back"), UNDO("undo"), RESET("reset"), SHOW("show"), QUIT(
 				"quit");
 
 		private final String REPRESENTATION;
@@ -43,6 +44,10 @@ public class Console implements Runnable {
 				System.out.println("\nAll variables prefixed by '?' located before the colon are those that will be displayed.");
 				System.out.println("\nEverything written after the colon equates to the WHERE block in a SPARQL query. Each line is seperated by the '&' character.");
 				break;
+			case INSPECT_RELATIONS:
+				System.out.println("\nDecide which properties are appropriate for a particular relation.");
+				System.out.println("\nThe database will automatically adjust itself in accordance with each property adjustment.");
+				break;
 			case HELP:
 				listOfCommands();
 				break;
@@ -50,7 +55,7 @@ public class Console implements Runnable {
 				System.out.println("\nGoing back...");
 				break;
 			case UNDO:
-				System.out.println("\nRemoving last entry...");
+				System.out.println("\nLoading previous state...");
 				break;
 			case RESET:
 				System.out.println("\nResetting database...");
@@ -105,7 +110,7 @@ public class Console implements Runnable {
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
-				if(mode == Modes.UNDO || mode == Modes.RESET) {
+				if(mode == Modes.RESET || mode == Modes.BACK) {
 					return false;
 				}
 				this.mode = mode;
@@ -171,8 +176,11 @@ public class Console implements Runnable {
 					switch (mode) {
 					case INSERT:
 					case QUERY:
-						case SHOW:
+					case INSPECT_RELATIONS:
 						illegalCommand();
+						break;
+					case SHOW:
+						transactionHandler.requestShow();
 						break;
 					case HELP:
 						currentMode.helpMessage();
@@ -221,10 +229,21 @@ public class Console implements Runnable {
 						validEntry = true;
 					}
 				}
+				if (currentMode == Modes.INSPECT_RELATIONS) {
+					if (validateInspectRelation(command)) {
+						validEntry = true;
+					}
+				}
 			}
 		} while (!back && !validEntry);
 		
 		return command;
+	}
+
+	// TODO
+	private boolean validateInspectRelation(String command) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	/**
@@ -399,6 +418,19 @@ public class Console implements Runnable {
 						if (query != null) {
 							Result result = transactionHandler.requestQuery(query);
 							System.out.println(result);
+						} else {
+							resetPromptMessage();
+						}
+					}
+					break;
+				case INSPECT_RELATIONS:
+					setPromptMessage(Modes.INSPECT_RELATIONS);
+					while (mode == Modes.INSPECT_RELATIONS) {
+						String relationString = transactionHandler.showRelations();
+						String command = nextCommand(Modes.INSPECT_RELATIONS);
+						if (command != null)  {
+							transactionHandler.updateRelation(command);
+							transactionHandler.requestShow();
 						} else {
 							resetPromptMessage();
 						}
