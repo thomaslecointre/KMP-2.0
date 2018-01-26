@@ -129,7 +129,6 @@ public class Console implements Runnable {
 		transactionHandler = new TransactionHandler();
 		scanner = new Scanner(System.in);
 		active = true;
-		mode = Modes.INSERT;
 		prompt();
 		scanner.close();
 	}
@@ -427,6 +426,7 @@ public class Console implements Runnable {
 					setPromptMessage(Modes.INSPECT_RELATIONS);
 					while (mode == Modes.INSPECT_RELATIONS) {
 						String relationString = transactionHandler.showRelations();
+						System.out.println(relationString);
 						String command = nextCommand(Modes.INSPECT_RELATIONS);
 						if (command != null)  {
 							transactionHandler.updateRelation(command);

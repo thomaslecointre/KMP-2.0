@@ -50,4 +50,12 @@ public class Result {
 		}
 		return res.toString();
 	}
+
+	public int size() {
+		return selectorMappings.values().iterator().next().size();
+	}
+
+	public ArrayList<Data> getData(String identifier) {
+		return selectorMappings.get(identifier);
+	}
 }
