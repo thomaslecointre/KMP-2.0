@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import model.Relation;
+import model.Relation.Properties;
 import query.Result;
 import query.TransactionHandler;
 
@@ -240,18 +241,12 @@ public class Console implements Runnable {
 		return command;
 	}
 
-	// TODO
-	private boolean validateInspectRelation(String command) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	/**
 	 * Checks if the Modes enum are present in the string in parameter 
 	 * @param s a text
 	 * @return a boolean if a Modes enum is present in the string
 	 */
-	private static boolean isKeyWord(String s) {
+	private boolean isKeyWord(String s) {
 		Modes[] modes = Modes.values();
 		StringBuilder keywords = new StringBuilder();
 		for (int i = 0; i < modes.length-1; i++) {
@@ -264,13 +259,73 @@ public class Console implements Runnable {
         return matcher.find();
     }
 	
+	private boolean isKeyWordRelation(String s) {
+		String keywords = transactionHandler.patternMatcherRelations();
+		
+		Pattern pattern = Pattern.compile(keywords.toString(), Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(s);
+        return matcher.find();
+    }
+	
+	private boolean isKeyWordRelationIsNot(String s) {
+		String keywords = "is|not";
+		
+		Pattern pattern = Pattern.compile(keywords.toString(), Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(s);
+        return matcher.find();
+    }
+	
+	private boolean isKeyWordRelationProperty(String s) {
+		Properties[] properties = Properties.values();
+		StringBuilder keywords = new StringBuilder();
+		for (int i = 0; i < properties.length-1; i++) {
+			keywords.append(properties[i] + "|");
+		}
+		keywords.append(properties[properties.length-1]);
+		
+		Pattern pattern = Pattern.compile(keywords.toString(), Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(s);
+        return matcher.find();
+    }
+	
+	// TODO
+	private boolean validateInspectRelation(String command) {
+		String[] tokens = command.split(" ");
+		
+		//check the number of words
+		if (tokens.length != 3) {
+			System.out.println("Incorrect : number of words");
+			return false;
+		}
+		
+		//check if the first token is a relation
+		if (!isKeyWordRelation(tokens[0])) {
+			System.out.println("Incorrect : first token isn't a relation");
+			return false;
+		}
+		
+		//check if the second token is "is" or "not"
+		if (!isKeyWordRelationIsNot(tokens[1])) {
+			System.out.println("Incorrect : second token is different of 'is' or 'not'");
+			return false;
+		}
+		
+		//check if the third token is a property of a relation
+		if (!isKeyWordRelationProperty(tokens[2])) {
+			System.out.println("Incorrect : third token isn't a property of Relation");
+			return false;
+		}
+		
+		return true;
+	}
+	
 	//TODO allow more characters
 	/**
 	 * Checks if the command is a valid insertion
 	 * @param command a string written by the user 
 	 * @return a boolean if the command is a valid insertion
 	 */
-	private static boolean validateInsertion(String command) {
+	private boolean validateInsertion(String command) {
 		String[] tokens = command.split(" ");
 		
 		//check the parity (number of words)
@@ -386,6 +441,8 @@ public class Console implements Runnable {
 		
 		return true;
 	}
+	
+	
 
 	/**
 	 * Top level user input handling function.

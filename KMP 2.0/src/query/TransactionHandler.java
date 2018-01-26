@@ -2,6 +2,7 @@ package query;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
 import model.Data;
 import model.Relation;
 import model.Subject;
@@ -118,10 +119,10 @@ public class TransactionHandler {
 		for (Relation.Properties property : Relation.Properties.values()) {
 			if (relation.isPropertyActive(property)) {
 				switch (property) {
-				case SYMMETRY:
+				case SYMMETRIC:
 					applySymmetry(relation);
 					break;
-				case TRANSITIVITY:
+				case TRANSITIVE:
 					applyTransitivity(relation);
 					break;
 				}
@@ -209,9 +210,19 @@ public class TransactionHandler {
 		}
 		res.append("\nProperties : ");
 		for (Relation.Properties property : Relation.Properties.values()) {
-			res.append("\n\t").append(property);
+			res.append("\n\t").append(property.toString().toLowerCase());
 		}
 		return res.toString();
+	}
+	
+	public String patternMatcherRelations() {
+		ArrayList<Relation> relations = database.getAllRelations();
+		StringBuilder keywords = new StringBuilder();
+		for (int i = 0; i < relations.size()-1; i++) {
+			keywords.append(relations.get(i) + "|");
+		}
+		keywords.append(relations.get(relations.size()-1));
+		return keywords.toString();
 	}
 
 }

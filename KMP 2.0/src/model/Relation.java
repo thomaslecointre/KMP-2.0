@@ -3,8 +3,6 @@ package model;
 import java.io.Serializable;
 import java.util.EnumMap;
 
-import model.Relation.Properties;
-
 /**
  * This class is used to represent a Relation object in the database.
  */
@@ -13,9 +11,8 @@ public class Relation extends Data implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	public enum Properties {
-		SYMMETRY, TRANSITIVITY
-		
+	public enum Properties implements Serializable {
+		SYMMETRIC, TRANSITIVE
 	}
 	private EnumMap<Properties, Boolean> properties;
 	
