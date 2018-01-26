@@ -1,5 +1,6 @@
 package ui;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -105,7 +106,8 @@ public class Console implements Runnable {
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
-				if(mode == Modes.UNDO || mode == Modes.RESET) {
+				//if(mode == Modes.UNDO || mode == Modes.RESET) {
+				if(mode == Modes.RESET) {
 					return false;
 				}
 				this.mode = mode;
@@ -386,6 +388,11 @@ public class Console implements Runnable {
 						String insertion = nextCommand(Modes.INSERT);
 						if (insertion != null) {
 							transactionHandler.requestInsert(insertion);
+							try {
+								transactionHandler.getDatabaseSerializer().insertCommand(transactionHandler.getDatabase());
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 							transactionHandler.requestShow();
 						} else {
 							resetPromptMessage();
@@ -409,6 +416,11 @@ public class Console implements Runnable {
 					break;
 				case QUIT:
 					active = false;
+					try {
+						transactionHandler.getDatabaseSerializer().quitCommand();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 					break;
 				}
 			} else {

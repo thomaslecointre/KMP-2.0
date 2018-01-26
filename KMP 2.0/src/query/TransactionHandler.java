@@ -1,8 +1,11 @@
 package query;
 
+import java.io.IOException;
+
 import model.Relation;
 import model.Subject;
 import persistence.Database;
+import persistence.DatabaseSerializer;
 import persistence.EntryData;
 
 /**
@@ -12,17 +15,27 @@ import persistence.EntryData;
 public class TransactionHandler {
 
 	private Database database;
+	private DatabaseSerializer databaseSerializer;
 
 	public TransactionHandler() {
 		database = new Database();
+		databaseSerializer = new DatabaseSerializer(database);
+		try {
+			database = databaseSerializer.initCommand();
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * Restores the database to its previous state.
 	 */
-	// TODO
 	public void requestUndo() {
-
+		try {
+			database = databaseSerializer.undoCommand();
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -30,6 +43,11 @@ public class TransactionHandler {
 	 */
 	public void requestReset() {
 		database.reset();
+		try {
+			databaseSerializer.resetCommand(database);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		requestShow();
 	}
 
@@ -85,7 +103,7 @@ public class TransactionHandler {
 		if (newEntryData) {
 			database.insert(entryData);
 		}
-
+		
 	}
 
 	/**
@@ -101,6 +119,10 @@ public class TransactionHandler {
 
 	public Database getDatabase() {
 		return database;
+	}
+
+	public DatabaseSerializer getDatabaseSerializer() {
+		return databaseSerializer;
 	}
 
 }

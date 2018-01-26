@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -252,36 +249,30 @@ public class Database implements Serializable {
 	public int getPrimaryIndex() {
 		return primaryIndex;
 	}
+	
+	
 
-	public String createPath(String fileName) throws IOException {
-		String path = System.getProperty("user.home") + "/KMP_dataSerialized/";
-		Files.createDirectories(Paths.get(path));
-		return path + fileName;
-	}
-
-	public void writeObject(String fileName) throws IOException {
-		FileOutputStream fileOut = new FileOutputStream(createPath(fileName));
+	public void writeObject(String path) throws IOException {
+		FileOutputStream fileOut = new FileOutputStream(path);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
 		out.writeObject(this);
 		out.close();
 		fileOut.close();
-		System.out.printf("\ndata serialized in " + createPath(fileName));
+		System.out.printf("\ndata serialized in " + path + "\n");
 	}
 
-	public Database readObject(Database db, String fileName) throws IOException, ClassNotFoundException {
+	public Database readObject(Database db, String path) throws IOException, ClassNotFoundException {
 		FileInputStream fileIn;
 		try {
-			fileIn = new FileInputStream(db.createPath(fileName));
+			fileIn = new FileInputStream(path);
 			ObjectInputStream in = new ObjectInputStream(fileIn);
 			db = (Database) in.readObject();
 			in.close();
 			fileIn.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		System.out.println("\ndata read from " + createPath(fileName));
+		System.out.println("\ndata read from " + path + "\n");
 		return db;
 	}
 
@@ -289,7 +280,7 @@ public class Database implements Serializable {
 		return table.get(key).getID().getSubject();
 	}
 
-	
+	/*
 	public static void main(String[] args) {
 		Database db = new Database();
 		EntryData ed = new EntryData();
@@ -310,7 +301,7 @@ public class Database implements Serializable {
 		//serialisation
 		System.out.println("\nserialization");
 		try {
-			db.writeObject("tmp");
+			db.writeObject("kmp_database.txt");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -319,11 +310,19 @@ public class Database implements Serializable {
 		System.out.println("\n\ndeserialization");
 		Database data2 = new Database();
 		try {
-			data2 = data2.readObject(data2, "tmp");
+			data2 = data2.readObject(data2, "kmp_database.txt");
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
 		System.out.println(data2.toString());
 	}
+	*/
 	
+	/*
+	public static void main(String[] args) {
+		System.out.println("test");
+		Database db = new Database();
+		db.deleteTemporaryDatabaseDirectory();
+	}
+	*/
 }
