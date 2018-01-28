@@ -46,28 +46,58 @@ public class DatabaseSerializer {
 		return numberTemporaryDatabase;
 	}
 
+	/**
+	 * Checks if an anterior version of the current version exists
+	 * @return the relative path of the file
+	 */
 	public String getPreviousTemporaryFileName() {
-		String path = temporaryDirectory + "tmp" + (numberTemporaryDatabase-1) + ".txt"; 
-		if ((numberTemporaryDatabase < 1) && (!Files.exists(Paths.get(databasePath + path)))) {
+		String path = temporaryDirectory + "tmp" + (numberTemporaryDatabase-2) + ".txt"; 
+		if ((numberTemporaryDatabase < 2) && (!Files.exists(Paths.get(databasePath + path)))) {
 			System.out.println("File doesn't exist !");
 			return null;
 		}
 		else return path;
 	}
 	
+	/**
+	 * Creates the path of the next temporary file  
+	 * @return the relative path of the file
+	 */
 	public String getTemporaryFileName() {
 		return temporaryDirectory + "tmp" + numberTemporaryDatabase + ".txt";
+	}
+	
+	/**
+	 * Checks if a future version of the current version exists
+	 * @return the relative path of the file
+	 */
+	public String getNextTemporaryFileName() {
+		String path = temporaryDirectory + "tmp" + numberTemporaryDatabase + ".txt"; 
+		if (!Files.exists(Paths.get(databasePath + path))) {
+			System.out.println("File doesn't exist !");
+			return null;
+		}
+		else return path;
 	}
 	
 	public void incrementNumberTemporaryDatabase() {
 		numberTemporaryDatabase++;
 	}
 	
+	/**
+	 * Checks that the numberTemporaryDatabase is positive and decrement it
+	 */
 	public void decrementNumberTemporaryDatabase() {
-		if (numberTemporaryDatabase < 0) System.out.println("No anterior temporary file !");
+		if (numberTemporaryDatabase < 1) System.out.println("No anterior temporary file !");
 		else numberTemporaryDatabase--;
 	}
 	
+	/**
+	 * Builds the architecture of the file system and loads the previous database built by the user if it exists 
+	 * @return the database created or found
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
 	public Database initCommand() throws ClassNotFoundException, IOException {
 		if (!Files.exists(Paths.get(databasePath + databaseFileName))) {
         	Files.createDirectories(Paths.get(databasePath));
@@ -83,37 +113,92 @@ public class DatabaseSerializer {
 		return db;
 	}
 
+	/**
+	 * Creates a new file containing the database serialized 
+	 * @param db the current database used by the user
+	 * @throws IOException
+	 */
 	public void insertCommand(Database db) throws IOException {
 		this.db = db;
 		db.writeObject(databasePath + getTemporaryFileName());
     	incrementNumberTemporaryDatabase();
 	}
-
+	
+	/**
+	 * Checks if a file containing the previous database exists and loads it
+	 * @return the previous database 
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
 	public Database undoCommand() throws ClassNotFoundException, IOException {
-		if (Files.exists(Paths.get(databasePath + databaseFileName))) {
+		String path = getPreviousTemporaryFileName();
+		if (path != null) {
 			decrementNumberTemporaryDatabase();
-			db = db.readObject(db, databasePath + getPreviousTemporaryFileName());
+			db = db.readObject(db, databasePath + path);
 		}
 		return db;
 	}
 	
-	/*
-	public boolean isNextTemporaryFileName() { 
-		return !Files.exists(Paths.get(databasePath + getTemporaryFileName()));		
-	}
+	/**
+	 * Checks if a file containing the future database exists and loads it
+	 * @return the future database
+	 * @throws ClassNotFoundException
+	 * @throws IOException
 	 */
-
-	//TODO
-	public void redoCommand() {
-		
+	public Database redoCommand() throws ClassNotFoundException, IOException {
+		String path = getNextTemporaryFileName();
+		if (path != null) {
+			db = db.readObject(db, databasePath + path);
+			incrementNumberTemporaryDatabase();
+		}
+		return db;
+	}
+	
+	/**
+	 * Checks if there is a file containing a database at the path given, loads it and creates a new temporary file
+	 * @param path the path of the file containing a database
+	 * @return the database at the path given
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	public Database importCommand(String path) throws ClassNotFoundException, IOException {
+		if (!Files.exists(Paths.get(path)))
+			System.out.println("File doesn't exist !");
+		else {
+			db = db.readObject(db, path);
+			db.writeObject(databasePath + getTemporaryFileName());
+			incrementNumberTemporaryDatabase();
+		}
+		return db;
+	}
+	
+	/**
+	 * Creates folders and a file containing the current database
+	 * @param path the path of the file where the database has to be saved
+	 * @throws IOException
+	 */
+	public void exportCommand(String path) throws IOException {
+		if (!Files.exists(Paths.get(path))) {
+        	Files.createDirectories(Paths.get(path));
+        }
+    	db.writeObject(path);
+    	System.out.println("Export succeeded");
 	}
 
+	/**
+	 * Changes the current database with the database given in parameter and creates a temporary file
+	 * @param db the new database to be used
+	 * @throws IOException
+	 */
 	public void resetCommand(Database db) throws IOException {		
 		this.db = db;
 		db.writeObject(databasePath + getTemporaryFileName());
 		incrementNumberTemporaryDatabase();
 	}
 
+	/**
+	 * Deletes all the temporary files and the folder
+	 */
 	public void deleteTemporaryDatabaseDirectory() {
 	    File file = new File(temporaryDataBasePath);
 		File[] contents = file.listFiles();
@@ -123,6 +208,10 @@ public class DatabaseSerializer {
 	    file.delete();
 	}
 	
+	/**
+	 * Saves the current database and deletes the temporary files
+	 * @throws IOException
+	 */
 	public void quitCommand() throws IOException {
 		db.writeObject(databasePath + databaseFileName);
 		deleteTemporaryDatabaseDirectory();
