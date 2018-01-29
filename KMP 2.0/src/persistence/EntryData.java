@@ -129,4 +129,8 @@ public class EntryData implements Serializable {
 	public ID getID() {
 		return id;
 	}
+
+	public void purgeRelation(Relation relation) {
+		relationMap.get(relation).clear();
+	}
 }

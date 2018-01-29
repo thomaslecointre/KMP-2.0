@@ -2,6 +2,7 @@ package query;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import model.Data;
 import model.Relation;
@@ -18,6 +19,7 @@ public class TransactionHandler {
 
 	private Database database;
 	private DatabaseSerializer databaseSerializer;
+	private boolean fromRelationQualifierAdjustment = false;
 
 	public TransactionHandler() {
 		database = new Database();
@@ -50,7 +52,6 @@ public class TransactionHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		requestShow();
 	}
 
 	/**
@@ -60,16 +61,18 @@ public class TransactionHandler {
 	 *            a string corresponding to a user entry.
 	 */
 	public void requestInsert(String insertion) {
+		
 		String[] splitInsertion = insertion.split(" ");
 		String id = splitInsertion[0];
 		int key = database.findKey(id);
+		Subject subjectId;
 		EntryData entryData;
 		boolean newEntryData = false;
 
 		if (key == 0) {
 			entryData = new EntryData();
 			newEntryData = true;
-			Subject subjectId = database.findSubject(id);
+			subjectId = database.findSubject(id);
 
 			if (subjectId != null) {
 				entryData.setID(subjectId);
@@ -81,6 +84,7 @@ public class TransactionHandler {
 
 		} else {
 			entryData = database.getEntryData(key);
+			subjectId = entryData.getID().getSubject();
 		}
 		
 		if (splitInsertion.length > 1) {
@@ -101,9 +105,26 @@ public class TransactionHandler {
 					requestInsert(splitInsertion[index]);
 				}
 
-				entryData.put(relation, subject);
+				if (relation.isPropertyActive(Relation.Properties.REFLEXIVE)) {
+					if (entryData.containsRelation(relation)) {
+						entryData.purgeRelation(relation);
+						if (subjectId.equals(subject)) {
+							entryData.put(relation, subject);
+						}
+					} else {
+						if (subjectId.equals(subject)) {
+							entryData.put(relation, subject);
+						}
+					}
+				} else {
+					if (!subjectId.equals(subject)) {
+						entryData.put(relation, subject);
+					}
+				}
 				
-				if (applyRelationProperties) {
+				
+				if (applyRelationProperties && !fromRelationQualifierAdjustment) {
+					fromRelationQualifierAdjustment = true;
 					applyRelationProperties(relation);
 				}
 			}
@@ -119,6 +140,9 @@ public class TransactionHandler {
 		for (Relation.Properties property : Relation.Properties.values()) {
 			if (relation.isPropertyActive(property)) {
 				switch (property) {
+				case REFLEXIVE:
+					applyReflexivity(relation);
+					break;
 				case SYMMETRIC:
 					applySymmetry(relation);
 					break;
@@ -128,41 +152,53 @@ public class TransactionHandler {
 				}
 			}
 		}
+		fromRelationQualifierAdjustment = false;
+	}
+	
+	// TODO
+	private void applyReflexivity(Relation relation) {
+	
 	}
 
 	private void applySymmetry(Relation relation) {
-		int[] totalNumberOfEntries = {0, 0};
-		int[] previousTotalNumberOfEntries = null;
+		int[] totalNumberOfEntries = new int[]{0, 0};
+		int[] previousTotalNumberOfEntries = new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE};
 		String query = "?X, ?Y : ?X " + relation + " ?Y"; 
 		do {
-			previousTotalNumberOfEntries = totalNumberOfEntries;
+			previousTotalNumberOfEntries = Arrays.copyOf(totalNumberOfEntries, totalNumberOfEntries.length);
 			Result result = requestQuery(query);
+			
+			ArrayList<Data> first = result.getData("?X");
+			totalNumberOfEntries[0] = first.size();
+			ArrayList<Data> second = result.getData("?Y");
+			totalNumberOfEntries[1] = second.size();
+			
 			for (int index = 0; index < result.size(); index++) {
-				ArrayList<Data> first = result.getData("?X");
-				totalNumberOfEntries[0] = first.size();
-				ArrayList<Data> second = result.getData("?Y");
-				totalNumberOfEntries[1] = second.size();
 				String insertion = second.get(index) + " " + relation + " " + first.get(index);
 				requestInsert(insertion);
 			}
+			
 		} while(totalNumberOfEntries[0] != previousTotalNumberOfEntries[0] || totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
 	}
 	
 	private void applyTransitivity(Relation relation) {
-		int[] totalNumberOfEntries = {0, 0};
-		int[] previousTotalNumberOfEntries = null;
+		int[] totalNumberOfEntries = new int[]{0, 0};
+		int[] previousTotalNumberOfEntries = new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE};
 		String query = "?X, ?Z : ?X " + relation + " ?Y & ?Y " + relation + " ?Z"; 
 		do {
-			previousTotalNumberOfEntries = totalNumberOfEntries;
+			previousTotalNumberOfEntries = Arrays.copyOf(totalNumberOfEntries, totalNumberOfEntries.length);
 			Result result = requestQuery(query);
+			
+			ArrayList<Data> first = result.getData("?X");
+			totalNumberOfEntries[0] = first.size();
+			ArrayList<Data> second = result.getData("?Z");
+			totalNumberOfEntries[1] = second.size();
+			
 			for (int index = 0; index < result.size(); index++) {
-				ArrayList<Data> first = result.getData("?X");
-				totalNumberOfEntries[0] = first.size();
-				ArrayList<Data> second = result.getData("?Z");
-				totalNumberOfEntries[1] = second.size();
-				String insertion = second.get(index) + " " + relation + " " + first.get(index);
+				String insertion = first.get(index) + " " + relation + " " + second.get(index);
 				requestInsert(insertion);
 			}
+			
 		} while(totalNumberOfEntries[0] != previousTotalNumberOfEntries[0] || totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
 	}
 
@@ -195,7 +231,6 @@ public class TransactionHandler {
 		if (qualifier.equals("is")) {
 			relation.setProperty(property, true);
 			applyRelationProperties(relation);
-			requestShow();
 		} else if (qualifier.equals("not")) {
 			relation.setProperty(property, false);
 		}
