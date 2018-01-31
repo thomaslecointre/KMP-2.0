@@ -56,6 +56,10 @@ public class Result {
 	}
 
 	public ArrayList<Data> getData(String identifier) {
-		return selectorMappings.get(identifier);
+		if (selectorMappings.get(identifier) == null) {
+			return new ArrayList<Data>();
+		} else {
+			return selectorMappings.get(identifier);
+		}
 	}
 }

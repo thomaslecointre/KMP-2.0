@@ -78,6 +78,7 @@ public class Database implements Serializable {
 	 */
 	public void reset() {
 		table.clear();
+		objects.clear();
 		primaryIndex = 1;
 	}
 

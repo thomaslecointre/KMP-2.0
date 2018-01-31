@@ -101,7 +101,7 @@ public class EntryData implements Serializable {
 	 *            an instance of Relation.
 	 * @return a boolean indicating the presence of relation.
 	 */
-	public boolean containsRelation(Relation relation) {
+	public boolean hasRelation(Relation relation) {
 		return relationMap.containsKey(relation);
 	}
 
@@ -130,7 +130,15 @@ public class EntryData implements Serializable {
 		return id;
 	}
 
-	public void purgeRelation(Relation relation) {
+	public void purgeSubjectsFromRelation(Relation relation) {
 		relationMap.get(relation).clear();
+	}
+
+	public void removeIdFromRelation(Relation relation) {
+		relationMap.get(relation).remove(this.id.getSubject());
+	}
+
+	public Subject getIDSubject() {
+		return this.id.getSubject();
 	}
 }
