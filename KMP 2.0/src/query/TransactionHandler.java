@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import model.Data;
 import model.Relation;
+import model.Relation.Properties;
 import model.Subject;
 import persistence.Database;
 import persistence.DatabaseSerializer;
@@ -108,7 +109,6 @@ public class TransactionHandler {
 
 				if (relation.isPropertyActive(Relation.Properties.REFLEXIVE)) {
 					if (entryData.hasRelation(relation)) {
-						entryData.purgeSubjectsFromRelation(relation);
 						if (subjectId.equals(subject)) {
 							entryData.put(relation, subject);
 						}
@@ -117,7 +117,7 @@ public class TransactionHandler {
 							entryData.put(relation, subject);
 						}
 					}
-				} else {
+				} else if (relation.isPropertyActive(Properties.IRREFLEXIVE)) {
 					if (!subjectId.equals(subject)) {
 						entryData.put(relation, subject);
 					}
@@ -143,8 +143,17 @@ public class TransactionHandler {
 				case REFLEXIVE:
 					applyReflexivity(relation);
 					break;
+				case IRREFLEXIVE:
+					applyIrreflexivity(relation);
+					break;
 				case SYMMETRIC:
 					applySymmetry(relation);
+					break;
+				case ANTISYMMETRIC:
+					applyAntiSymmetry(relation);
+					break;
+				case ASYMMETRIC:
+					applyAsymmetry(relation);
 					break;
 				case TRANSITIVE:
 					applyTransitivity(relation);
@@ -153,24 +162,73 @@ public class TransactionHandler {
 			} else {
 				switch (property) {
 				case REFLEXIVE:
-					applyIrreflexivity(relation);
+					removeReflexivity(relation);
+					break;
+				case IRREFLEXIVE:
+					removeIrreflexivity(relation);
+					break;
+				case SYMMETRIC:
+					removeSymmetry(relation);
+					break;
+				case ANTISYMMETRIC:
+					removeAntiSymmetry(relation);
+					break;
+				case ASYMMETRIC:
+					removeAsymmetry(relation);
+					break;
+				case TRANSITIVE:
+					removeTransitivity(relation);
+					break;
 				}
 			}
+			fromRelationQualifierAdjustment = false;
 		}
-		fromRelationQualifierAdjustment = false;
 	}
 
+	// TODO
+	private void removeTransitivity(Relation relation) {
+		
+	}
+
+	// TODO
+	private void removeAsymmetry(Relation relation) {
+		
+	}
+
+	// TODO
+	private void removeAntiSymmetry(Relation relation) {
+		
+	}
+
+	// TODO
+	private void removeSymmetry(Relation relation) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	// TODO
+	private void removeIrreflexivity(Relation relation) {
+		// TODO Auto-generated method stub
+		
+	}
 	
+	// TODO
+	private void removeReflexivity(Relation relation) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	private void applyReflexivity(Relation relation) {
+		relation.setProperty(Relation.Properties.IRREFLEXIVE, false);
 		for (EntryData entryData : database.getAllEntries()) {
 			if (entryData.hasRelation(relation)) {
-				entryData.purgeSubjectsFromRelation(relation);
 				entryData.put(relation, entryData.getIDSubject());
 			}
 		}
 	}
 
 	private void applyIrreflexivity(Relation relation) {
+		relation.setProperty(Relation.Properties.REFLEXIVE, false);
 		for (EntryData entryData : database.getAllEntries()) {
 			if (entryData.hasRelation(relation)) {
 				entryData.removeIdFromRelation(relation);
@@ -194,6 +252,77 @@ public class TransactionHandler {
 			for (int index = 0; index < result.size(); index++) {
 				String insertion = second.get(index) + " " + relation + " " + first.get(index);
 				requestInsert(insertion);
+			}
+
+		} while (totalNumberOfEntries[0] != previousTotalNumberOfEntries[0]
+				|| totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
+	}
+	
+	// TODO	
+	private void applyAsymmetry(Relation relation) {
+		
+		relation.setProperty(Relation.Properties.ANTISYMMETRIC, true); // An asymmetric relation is antisymmetric by default
+		
+		int[] totalNumberOfEntries = new int[] { 0, 0 };
+		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
+		String query = "?X, ?Y : ?X " + relation + " ?Y";
+		do {
+			previousTotalNumberOfEntries = Arrays.copyOf(totalNumberOfEntries, totalNumberOfEntries.length);
+			Result result = requestQuery(query);
+
+			ArrayList<Data> first = result.getData("?X");
+			totalNumberOfEntries[0] = first.size();
+			ArrayList<Data> second = result.getData("?Y");
+			totalNumberOfEntries[1] = second.size();
+
+			for (int index = 0; index < result.size(); index++) {
+				Subject x = (Subject) first.get(index);
+				Subject y = (Subject) second.get(index);
+				
+				int keyX = database.findKey(x);
+				int keyY = database.findKey(y);
+				
+				EntryData entryDataX = database.getEntryData(keyX);
+				EntryData entryDataY = database.getEntryData(keyY);
+				
+				if (entryDataX.relationContainsSubject(relation, y) && entryDataY.relationContainsSubject(relation, x)) {
+					entryDataX.removeSubjectFromRelation(relation, y);
+					entryDataY.removeSubjectFromRelation(relation, x);
+				}
+			}
+
+		} while (totalNumberOfEntries[0] != previousTotalNumberOfEntries[0]
+				|| totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
+	}
+
+	// TODO
+	private void applyAntiSymmetry(Relation relation) {
+		int[] totalNumberOfEntries = new int[] { 0, 0 };
+		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
+		String query = "?X, ?Y : ?X " + relation + " ?Y";
+		do {
+			previousTotalNumberOfEntries = Arrays.copyOf(totalNumberOfEntries, totalNumberOfEntries.length);
+			Result result = requestQuery(query);
+
+			ArrayList<Data> first = result.getData("?X");
+			totalNumberOfEntries[0] = first.size();
+			ArrayList<Data> second = result.getData("?Y");
+			totalNumberOfEntries[1] = second.size();
+
+			for (int index = 0; index < result.size(); index++) {
+				Subject x = (Subject) first.get(index);
+				Subject y = (Subject) second.get(index);
+				
+				int keyX = database.findKey(x);
+				int keyY = database.findKey(y);
+				
+				EntryData entryDataX = database.getEntryData(keyX);
+				EntryData entryDataY = database.getEntryData(keyY);
+				
+				if (entryDataX.relationContainsSubject(relation, y) && entryDataY.relationContainsSubject(relation, x) && x.equals(y)) {
+					entryDataX.removeSubjectFromRelation(relation, y);
+					entryDataY.removeSubjectFromRelation(relation, x);
+				}
 			}
 
 		} while (totalNumberOfEntries[0] != previousTotalNumberOfEntries[0]

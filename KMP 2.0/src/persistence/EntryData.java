@@ -129,6 +129,13 @@ public class EntryData implements Serializable {
 	public ID getID() {
 		return id;
 	}
+	
+	public boolean relationContainsSubject(Relation relation, Subject subject) {
+		if (relationMap.get(relation).contains(subject)) {
+			return true;
+		}
+		return false;
+	}
 
 	public void purgeSubjectsFromRelation(Relation relation) {
 		relationMap.get(relation).clear();
@@ -140,5 +147,9 @@ public class EntryData implements Serializable {
 
 	public Subject getIDSubject() {
 		return this.id.getSubject();
+	}
+
+	public void removeSubjectFromRelation(Relation relation, Subject y) {
+		relationMap.get(relation).remove(y);
 	}
 }

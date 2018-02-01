@@ -248,16 +248,11 @@ public class Database implements Serializable {
 		return table.keySet().contains(key);
 	}
 
-	public HashMap<Integer, EntryData> getTable() {
-		return table;
-	}
-
+	
 	public int getPrimaryIndex() {
 		return primaryIndex;
 	}
 	
-	
-
 	public void writeObject(String path) throws IOException {
 		FileOutputStream fileOut = new FileOutputStream(path);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
