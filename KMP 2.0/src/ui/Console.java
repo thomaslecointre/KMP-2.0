@@ -24,8 +24,7 @@ public class Console implements Runnable {
 	 * Enumeration of all types of commands the user can use.
 	 */
 	private enum Modes {
-		INSERT("insert"), QUERY("query"), INSPECT_RELATIONS("inspect relations"), HELP("help"), BACK("back"), UNDO("undo"), RESET("reset"), SHOW("show"), QUIT(
-				"quit");
+		INSERT("insert"), QUERY("query"), INSPECT_RELATIONS("inspect relations"), UNDO("undo"), REDO("redo"), IMPORT("import"), EXPORT("export"), RESET("reset"), SHOW("show"), HELP("help"), BACK("back"), QUIT("quit");
 
 		private final String REPRESENTATION;
 
@@ -59,11 +58,22 @@ public class Console implements Runnable {
 			case UNDO:
 				System.out.println("\nLoading previous state...");
 				break;
+			case REDO:
+				System.out.println("\nLoading next state...");
+				break;
+			case IMPORT:
+				System.out.println("\nImporting Database...");
+				break;
+			case EXPORT:
+				System.out.println("\nExporting Database...");
+				break;
 			case RESET:
 				System.out.println("\nResetting database...");
 				break;
 			case QUIT:
 				System.out.println("\nExiting application...");
+				break;
+			default:
 				break;
 			}
 		}
@@ -112,7 +122,7 @@ public class Console implements Runnable {
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
-				if(mode == Modes.RESET || mode == Modes.BACK) {
+				if(/*mode == Modes.RESET ||*/ mode == Modes.BACK) {
 					return false;
 				}
 				this.mode = mode;
@@ -156,89 +166,6 @@ public class Console implements Runnable {
 			System.out.println(mode.REPRESENTATION);
 		}
 		System.out.println("\nUse 'back' to return to the main menu.");
-	}
-
-	/**
-	 * Determines the correct function to call in TransactionHandler depending on the currentMode parameter.
-	 * @param currentMode a instance of the Modes enum.
-	 * @return a string corresponding to the user entry, used by TransactionHandler either as an insertion or a query.
-	 */
-	private String nextCommand(Modes currentMode) {
-		parentMode = currentMode;
-		boolean modeDetected, back, validEntry = false;
-		String command;
-		do {
-			promptMessage();
-			command = scanner.nextLine();
-			modeDetected = false;
-			back = false;
-			for (Modes mode : Modes.values()) {
-				if (command.contains(mode.REPRESENTATION)) {
-					switch (mode) {
-					case INSERT:
-					case QUERY:
-					case INSPECT_RELATIONS:
-						illegalCommand();
-						break;
-					case SHOW:
-						transactionHandler.requestShow();
-						break;
-					case HELP:
-						currentMode.helpMessage();
-						break;
-					case BACK:
-						this.mode = null;
-						parentMode = null;
-						back = true;
-						listOfCommands();
-						break;
-					case UNDO:
-						if (currentMode == Modes.INSERT) {
-							transactionHandler.requestUndo();
-							mode.helpMessage();
-						}
-						if (currentMode == Modes.QUERY) {
-							illegalCommand();
-						}
-						break;
-					case RESET:
-						if (currentMode == Modes.INSERT) {
-							transactionHandler.requestReset();
-							mode.helpMessage();
-						}
-						if (currentMode == Modes.QUERY) {
-							illegalCommand();
-						}
-						break;
-					case QUIT:
-						illegalCommand();
-						break;
-					}
-					command = null;
-					modeDetected = true;
-					break;
-				} 
-			}
-			if (!modeDetected) {
-				if (currentMode == Modes.INSERT) {
-					if (validateInsertion(command)) {
-						validEntry = true;
-					}
-				}
-				if (currentMode == Modes.QUERY) {
-					if (validateQuery(command)) {
-						validEntry = true;
-					}
-				}
-				if (currentMode == Modes.INSPECT_RELATIONS) {
-					if (validateInspectRelation(command)) {
-						validEntry = true;
-					}
-				}
-			}
-		} while (!back && !validEntry);
-		
-		return command;
 	}
 
 	/**
@@ -442,7 +369,25 @@ public class Console implements Runnable {
 		return true;
 	}
 	
+	/**
+	 * Checks if the command is a valid import
+	 * @param command a string written by the user
+	 * @return a boolean if the command is a valid import
+	 */
+	private static boolean validateImport(String command) {
+		//TODO
+		return true;
+	}
 	
+	/**
+	 * Checks if the command is a valid export
+	 * @param command a string written by the user
+	 * @return a boolean if the command is a valid export
+	 */
+	private static boolean validateExport(String command) {
+		//TODO		
+		return true;
+	}
 
 	/**
 	 * Top level user input handling function.
@@ -499,6 +444,31 @@ public class Console implements Runnable {
 						}
 					}
 					break;
+				case HELP:
+					listOfCommands();
+					break;
+				case IMPORT:
+					setPromptMessage(Modes.IMPORT);
+					String importPath = nextCommand(Modes.IMPORT);
+					if (importPath != null) {
+						transactionHandler.requestImport(importPath);
+						transactionHandler.requestShow();
+					}
+					resetPromptMessage();
+					//mode.helpMessage();
+					break;
+				case EXPORT:
+					setPromptMessage(Modes.EXPORT);
+					String exportPath = nextCommand(Modes.EXPORT);
+					if (exportPath != null)
+						transactionHandler.requestExport(exportPath);
+					resetPromptMessage();
+					//mode.helpMessage();
+					break;
+				case RESET:
+					transactionHandler.requestReset();
+					mode.helpMessage();
+					break;
 				case SHOW:
 					transactionHandler.requestShow();
 					break;
@@ -510,12 +480,105 @@ public class Console implements Runnable {
 						e.printStackTrace();
 					}
 					break;
+				case BACK:
+				case UNDO:
+				case REDO:
+					illegalCommand();
+					break;
 				}
 			} else {
 				illegalCommand();
 			}
 			
 		}
+	}
+	
+	/**
+	 * Determines the correct function to call in TransactionHandler depending on the currentMode parameter.
+	 * @param currentMode a instance of the Modes enum.
+	 * @return a string corresponding to the user entry, used by TransactionHandler either as an insertion or a query.
+	 */
+	private String nextCommand(Modes currentMode) {
+		parentMode = currentMode;
+		boolean modeDetected, back, validEntry = false;
+		String command;
+		do {
+			promptMessage();
+			command = scanner.nextLine();
+			modeDetected = false;
+			back = false;
+			for (Modes mode : Modes.values()) {
+				if (command.contains(mode.REPRESENTATION)) {
+					switch (mode) {
+					case INSERT:
+					case QUERY:
+					case INSPECT_RELATIONS:
+					case IMPORT:
+					case EXPORT:
+						illegalCommand();
+						break;
+					case SHOW:
+						transactionHandler.requestShow();
+						break;
+					case HELP:
+						currentMode.helpMessage();
+						break;
+					case BACK:
+						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT) {
+							this.mode = null;
+							parentMode = null;
+							back = true;
+							listOfCommands();
+						} else illegalCommand();
+						break;
+					case UNDO:
+						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS) {
+							transactionHandler.requestUndo();
+							transactionHandler.requestShow();
+						} else illegalCommand();
+						break;
+					case REDO:
+						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS) {
+							transactionHandler.requestRedo();
+							transactionHandler.requestShow();
+						} else illegalCommand();
+						break;
+					case QUIT:
+						illegalCommand();
+						break;
+					}
+					command = null;
+					modeDetected = true;
+					break;
+				} 
+			}
+			if (!modeDetected) {
+				switch (currentMode) {				
+				case INSERT:
+					if (validateInsertion(command))
+						validEntry = true;
+					break;
+				case QUERY:
+					if (validateQuery(command))
+						validEntry = true;
+					break;
+				case INSPECT_RELATIONS:
+					if (validateInspectRelation(command))
+						validEntry = true;
+					break;
+				case IMPORT:
+					if (validateImport(command))
+						validEntry = true;
+					break;
+				case EXPORT:
+					if (validateExport(command))
+						validEntry = true;
+					break;
+				}
+			}
+		} while (!back && !validEntry);
+		
+		return command;
 	}
 	
 	/*

@@ -39,6 +39,41 @@ public class TransactionHandler {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * Restores the database to its next state.
+	 */
+	public void requestRedo() {
+		try {
+			database = databaseSerializer.redoCommand();
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Imports a database from the absolute path given
+	 * @param pathFile absolute path of the file containing the database
+	 */
+	public void requestImport(String pathFile) {
+		try {
+			database = databaseSerializer.importCommand(pathFile);
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Exports the database at the absolute path given
+	 * @param pathFile absolute path to export the database
+	 */
+	public void requestExport(String pathFile) {
+		try {
+			databaseSerializer.exportCommand(pathFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * Restores the database to its initial state.
@@ -221,7 +256,8 @@ public class TransactionHandler {
 		for (int i = 0; i < relations.size()-1; i++) {
 			keywords.append(relations.get(i) + "|");
 		}
-		keywords.append(relations.get(relations.size()-1));
+		if (relations.size() > 0)
+			keywords.append(relations.get(relations.size()-1));
 		return keywords.toString();
 	}
 
