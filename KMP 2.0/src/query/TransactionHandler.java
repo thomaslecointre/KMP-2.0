@@ -106,21 +106,57 @@ public class TransactionHandler {
 					subject = new Subject(splitInsertion[index]);
 					requestInsert(splitInsertion[index]);
 				}
-
-				if (relation.isPropertyActive(Relation.Properties.REFLEXIVE)) {
-					if (entryData.hasRelation(relation)) {
-						if (subjectId.equals(subject)) {
-							entryData.put(relation, subject);
+				
+				// Check whether or not the relation's properties validate the insertion.
+				boolean canInsert = true;
+				for (Relation.Properties property : Relation.Properties.values()) {
+					switch (property) {
+					case REFLEXIVE:
+						break;
+					case IRREFLEXIVE:
+						if (relation.isPropertyActive(Relation.Properties.IRREFLEXIVE)) {
+							if (subjectId.equals(subject)) {
+								canInsert = false;
+							}
+						} 
+						break;
+					case SYMMETRIC:
+						break;
+					case ANTISYMMETRIC:
+						// if R(a,b) with a != b, then R(b,a) must not hold.
+						if (relation.isPropertyActive(Relation.Properties.ANTISYMMETRIC)) {
+							if (!subjectId.equals(subject)) {
+								int subjectKey = database.findKey(subject);
+								EntryData subjectEntryData = database.getEntryData(subjectKey);
+								if (subjectEntryData.hasRelation(relation)) {
+									if (subjectEntryData.getSubjects(relation).contains(subjectId)) {
+										canInsert = false;
+									}
+								}
+							}
 						}
-					} else {
-						if (subjectId.equals(subject)) {
-							entryData.put(relation, subject);
+						break;
+					case ASYMMETRIC:
+						// In this case a and b can be the same or different.
+						if (relation.isPropertyActive(Relation.Properties.ANTISYMMETRIC)) {
+							int subjectKey = database.findKey(subject);
+							EntryData subjectEntryData = database.getEntryData(subjectKey);
+							if (subjectEntryData.hasRelation(relation)) {
+								if (subjectEntryData.getSubjects(relation).contains(subjectId)) {
+									canInsert = false;
+								}
+							}
 						}
+						break;
+					
+					case TRANSITIVE:
+						
+						break;
 					}
-				} else if (relation.isPropertyActive(Properties.IRREFLEXIVE)) {
-					if (!subjectId.equals(subject)) {
-						entryData.put(relation, subject);
-					}
+				}
+				
+				if (canInsert) {
+					entryData.put(relation, subject);
 				}
 
 				if (applyRelationProperties && !fromRelationQualifierAdjustment) {
@@ -237,6 +273,9 @@ public class TransactionHandler {
 	}
 
 	private void applySymmetry(Relation relation) {
+		
+		relation.setProperty(Relation.Properties.ASYMMETRIC, false);
+		
 		int[] totalNumberOfEntries = new int[] { 0, 0 };
 		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
 		String query = "?X, ?Y : ?X " + relation + " ?Y";
@@ -261,6 +300,7 @@ public class TransactionHandler {
 	// TODO	
 	private void applyAsymmetry(Relation relation) {
 		
+		relation.setProperty(Relation.Properties.SYMMETRIC, false);
 		relation.setProperty(Relation.Properties.ANTISYMMETRIC, true); // An asymmetric relation is antisymmetric by default
 		
 		int[] totalNumberOfEntries = new int[] { 0, 0 };
