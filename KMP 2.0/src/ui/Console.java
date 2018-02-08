@@ -122,7 +122,7 @@ public class Console implements Runnable {
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
 			if (command.contains(mode.REPRESENTATION)) {
-				if(/*mode == Modes.RESET ||*/ mode == Modes.BACK) {
+				if(mode == Modes.BACK) {
 					return false;
 				}
 				this.mode = mode;
@@ -465,11 +465,11 @@ public class Console implements Runnable {
 					resetPromptMessage();
 					//mode.helpMessage();
 					break;
+				case SHOW:
+					transactionHandler.requestShow();
+					break;
 				case RESET:
 					transactionHandler.requestReset();
-					mode.helpMessage();
-					break;
-				case SHOW:
 					transactionHandler.requestShow();
 					break;
 				case QUIT:

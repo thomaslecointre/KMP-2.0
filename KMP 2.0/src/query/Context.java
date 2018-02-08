@@ -150,7 +150,7 @@ public class Context {
 									subjects = entryData.getSubjects(relation);
 								}
 								for (Subject subject : subjects) {
-									if (entryData.containsRelation(relation)) {
+									if (entryData.hasRelation(relation)) {
 										if (entryData.getSubjects(relation).contains(subject)) {
 											ArrayList<Data> line = new ArrayList<>();
 											line.add(database.getID(key));
@@ -163,7 +163,7 @@ public class Context {
 							} else {
 								Subject subject = database.findSubject(right);
 								if (subject != null) {
-									if (entryData.containsRelation(relation)) {
+									if (entryData.hasRelation(relation)) {
 										if (entryData.getSubjects(relation).contains(subject)) {
 											ArrayList<Data> line = new ArrayList<>();
 											line.add(database.getID(key));
@@ -177,7 +177,7 @@ public class Context {
 					} else {
 						Relation relation = database.findRelation(middle);
 						if (relation != null) {
-							if (entryData.containsRelation(relation)) {
+							if (entryData.hasRelation(relation)) {
 								String right = conditionStrings[2];
 								if (right.charAt(0) == '?') {
 									currentVariables.put(right, null);
@@ -257,7 +257,7 @@ public class Context {
 									subjects = entryData.getSubjects(relation);
 								}
 								for (Subject subject : subjects) {
-									if (entryData.containsRelation(relation)) {
+									if (entryData.hasRelation(relation)) {
 										if (entryData.getSubjects(relation).contains(subject)) {
 											ArrayList<Data> line = new ArrayList<>();
 											line.add(relation);
@@ -269,7 +269,7 @@ public class Context {
 							} else {
 								Subject subject = database.findSubject(right);
 								if (subject != null) {
-									if (entryData.containsRelation(relation)) {
+									if (entryData.hasRelation(relation)) {
 										if (entryData.getSubjects(relation).contains(subject)) {
 											ArrayList<Data> line = new ArrayList<>();
 											line.add(relation);
@@ -282,7 +282,7 @@ public class Context {
 					} else {
 						Relation relation = database.findRelation(middle);
 						if (relation != null) {
-							if (entryData.containsRelation(relation)) {
+							if (entryData.hasRelation(relation)) {
 								String right = conditionStrings[2];
 								if (right.charAt(0) == '?') {
 									currentVariables.put(right, null);

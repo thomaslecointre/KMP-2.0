@@ -12,7 +12,7 @@ public class Relation extends Data implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 	public enum Properties implements Serializable {
-		SYMMETRIC, TRANSITIVE
+		REFLEXIVE, IRREFLEXIVE, SYMMETRIC, ANTISYMMETRIC, ASYMMETRIC, TRANSITIVE
 	}
 	private EnumMap<Properties, Boolean> properties;
 	
