@@ -280,44 +280,6 @@ public class Database implements Serializable {
 	public Subject getID(Integer key) {
 		return table.get(key).getID().getSubject();
 	}
-
-	/*
-	public static void main(String[] args) {
-		Database db = new Database();
-		EntryData ed = new EntryData();
-		ed.setID(new Subject("laurent"));
-		ed.put(new Relation("ismarried"), new Subject("sophie"));
-		ed.put(new Relation("worksfor"), new Subject("ensisa"));
-		EntryData ed2 = new EntryData();
-		ed2.setID(new Subject("sophie"));
-		ed2.put(new Relation("ismarried"), new Subject("laurent"));
-		ed2.put(new Relation("worksfor"), new Subject("enscmu"));
-		ed2.put(new Relation("eats"), new Subject("chocolate"));
-		ed2.put(new Relation("drinks"), new Subject("coffee"));
-		ed2.put(new Relation("playswith"), new Subject("children"));
-		db.insert(ed);
-		db.insert(ed2);
-		//System.out.println("ed : " + ed.toString() + "\ned2 : " + ed2.toString() + "db : " + db.toString());
-		
-		//serialisation
-		System.out.println("\nserialization");
-		try {
-			db.writeObject("kmp_database.txt");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		//deserialization
-		System.out.println("\n\ndeserialization");
-		Database data2 = new Database();
-		try {
-			data2 = data2.readObject(data2, "kmp_database.txt");
-		} catch (ClassNotFoundException | IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println(data2.toString());
-	}
-	*/
 	
 	public ArrayList<Relation> getAllRelations() {
 		ArrayList<Relation> relations = new ArrayList<>();
@@ -332,12 +294,4 @@ public class Database implements Serializable {
 	public void replaceEntry(int key, EntryData entryData) {
 		table.put(key, entryData);
 	}
-	
-	/*
-	public static void main(String[] args) {
-		System.out.println("test");
-		Database db = new Database();
-		db.deleteTemporaryDatabaseDirectory();
-	}
-	*/
 }
