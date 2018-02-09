@@ -6,7 +6,6 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import model.Relation;
 import model.Relation.Properties;
 import query.Result;
 import query.TransactionHandler;
@@ -24,7 +23,7 @@ public class Console implements Runnable {
 	 * Enumeration of all types of commands the user can use.
 	 */
 	private enum Modes {
-		INSERT("insert"), QUERY("query"), INSPECT_RELATIONS("inspect relations"), UNDO("undo"), REDO("redo"), IMPORT("import"), EXPORT("export"), RESET("reset"), SHOW("show"), HELP("help"), BACK("back"), QUIT("quit");
+		INSERT("insert"), QUERY("query"), INSPECT_RELATIONS("inspect relations"), UNDO("undo"), REDO("redo"), IMPORT("import"), EXPORT("export"), RESET("reset"), SHOW("show"), HELP("help"), LANGUAGE("language"), BACK("back"), QUIT("quit");
 
 		private final String REPRESENTATION;
 
@@ -69,6 +68,9 @@ public class Console implements Runnable {
 				break;
 			case RESET:
 				System.out.println("\nResetting database...");
+				break;
+			case LANGUAGE:
+				System.out.println("\nChanging language...");
 				break;
 			case QUIT:
 				System.out.println("\nExiting application...");
@@ -215,7 +217,6 @@ public class Console implements Runnable {
         return matcher.find();
     }
 	
-	// TODO
 	private boolean validateInspectRelation(String command) {
 		String[] tokens = command.split(" ");
 		
@@ -246,7 +247,6 @@ public class Console implements Runnable {
 		return true;
 	}
 	
-	//TODO allow more characters
 	/**
 	 * Checks if the command is a valid insertion
 	 * @param command a string written by the user 
@@ -288,7 +288,6 @@ public class Console implements Runnable {
 		return true;
 	}
 
-    //TODO allow more characters
 	/**
 	 * Checks if the command is a valid query
 	 * @param command a string written by the user
@@ -375,7 +374,12 @@ public class Console implements Runnable {
 	 * @return a boolean if the command is a valid import
 	 */
 	private static boolean validateImport(String command) {
-		//TODO
+		Pattern patternPathStructure = Pattern.compile(".*\\.kmp");
+		Matcher matcherPathStruture = patternPathStructure.matcher(command);
+		if (!matcherPathStruture.matches()) {
+			System.out.println("Incorrect : path sould finished by .kmp");
+			return false;
+		}
 		return true;
 	}
 	
@@ -385,7 +389,31 @@ public class Console implements Runnable {
 	 * @return a boolean if the command is a valid export
 	 */
 	private static boolean validateExport(String command) {
-		//TODO		
+		Pattern patternPathStructure = Pattern.compile(".*\\.kmp");
+		Matcher matcherPathStruture = patternPathStructure.matcher(command);
+		if (!matcherPathStruture.matches()) {
+			System.out.println("Incorrect : path sould finished by .kmp");
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Checks if the command is a valid language
+	 * @param command a string written by the user
+	 * @return a boolean if the command is a valid language
+	 */
+	private static boolean validateLanguage(String command) {
+		
+		//TODO use file adapted
+		
+		String languages = "fr|en|nz|be|de|es|at|au";
+		Pattern patternPathStructure = Pattern.compile(languages);
+		Matcher matcherPathStruture = patternPathStructure.matcher(command);
+		if (!matcherPathStruture.matches()) {
+			System.out.println("Incorrect : not a national top-level domain");
+			return false;
+		}
 		return true;
 	}
 
@@ -438,6 +466,11 @@ public class Console implements Runnable {
 						String command = nextCommand(Modes.INSPECT_RELATIONS);
 						if (command != null)  {
 							transactionHandler.updateRelation(command);
+							try {
+								transactionHandler.getDatabaseSerializer().inspectRelationsCommand(transactionHandler.getDatabase());
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 							transactionHandler.requestShow();
 						} else {
 							resetPromptMessage();
@@ -472,6 +505,15 @@ public class Console implements Runnable {
 					transactionHandler.requestReset();
 					transactionHandler.requestShow();
 					break;
+				case LANGUAGE:
+					setPromptMessage(Modes.LANGUAGE);
+					String language = nextCommand(Modes.LANGUAGE);
+					if (language != null) {
+						transactionHandler.requestLanguage(language);
+						transactionHandler.requestShow();
+					}
+					resetPromptMessage();
+					break;
 				case QUIT:
 					active = false;
 					try {
@@ -484,6 +526,8 @@ public class Console implements Runnable {
 				case UNDO:
 				case REDO:
 					illegalCommand();
+					break;
+				default:
 					break;
 				}
 			} else {
@@ -515,6 +559,8 @@ public class Console implements Runnable {
 					case INSPECT_RELATIONS:
 					case IMPORT:
 					case EXPORT:
+					case RESET:
+					case LANGUAGE:
 						illegalCommand();
 						break;
 					case SHOW:
@@ -524,7 +570,7 @@ public class Console implements Runnable {
 						currentMode.helpMessage();
 						break;
 					case BACK:
-						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT) {
+						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT || currentMode == Modes.LANGUAGE) {
 							this.mode = null;
 							parentMode = null;
 							back = true;
@@ -545,6 +591,8 @@ public class Console implements Runnable {
 						break;
 					case QUIT:
 						illegalCommand();
+						break;
+					default:
 						break;
 					}
 					command = null;
@@ -574,37 +622,16 @@ public class Console implements Runnable {
 					if (validateExport(command))
 						validEntry = true;
 					break;
+				case LANGUAGE:
+					if (validateLanguage(command))
+						validEntry = true;
+					break;
+				default:
+					break;
 				}
 			}
 		} while (!back && !validEntry);
 		
 		return command;
 	}
-	
-	/*
-	public static void main(String[] args) {
-		
-		
-		//insertion
-		System.out.println(validateInsertion("laurent isMarried Sophie"));
-		System.out.println(validateInsertion("laurent isMarried Sophie worksfor ENSISA"));
-		System.out.println(validateInsertion("laurent"));									//false length < 3
-		System.out.println(validateInsertion("laurent is Married Sophie"));					//false parity
-		System.out.println(validateInsertion("laurent insert Sophie"));						//false keywords
-		System.out.println(validateInsertion("laurent is/-*Married Sophie"));				//false invalid tokens
-		System.out.println(validateInsertion("Spiderman ID PeterParker"));					//false ID
-		
-		//query
-		System.out.println(validateQuery("?x : ?x is man"));
-		System.out.println(validateQuery("?x, ?y : ?x is man & ?x worksFor ?y"));
-		System.out.println(validateQuery("?x, ?y : ?x is  human:man"));						//false global structure
-		System.out.println(validateQuery("?x ?y : ?x is man & ?x worksFor ?y"));			//false data structure
-		System.out.println(validateQuery("?x, ?y, ?x : ?x is man & ?x worksFor ?y"));		//false data names
-		System.out.println(validateQuery("?x : ?x ID Spiderman"));							//false ID
-		System.out.println(validateQuery("?x, ?y : ?x is man"));							//false variable unused
-		System.out.println(validateQuery("?x, ?y : ?x is man & laurent ?y is"));			//false relation-extremity
-		
-		
-	}
-	*/
 }

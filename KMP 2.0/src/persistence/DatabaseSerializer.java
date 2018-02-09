@@ -9,7 +9,7 @@ public class DatabaseSerializer {
 
 	private Database db;
 	private final String databasePath = System.getProperty("user.home") + System.getProperty("file.separator") + "KMP_dataSerialized" + System.getProperty("file.separator");
-	private final String databaseFileName = "kmp_database.txt";
+	private final String databaseFileName = "kmp_database.kmp";
 	private final String temporaryDataBasePath = databasePath + "tmp" + System.getProperty("file.separator");
 	private final String temporaryDirectory = "tmp" + System.getProperty("file.separator");
 	private int numberTemporaryDatabase = 0;
@@ -51,7 +51,7 @@ public class DatabaseSerializer {
 	 * @return the relative path of the file
 	 */
 	public String getPreviousTemporaryFileName() {
-		String path = temporaryDirectory + "tmp" + (numberTemporaryDatabase-2) + ".txt"; 
+		String path = temporaryDirectory + "tmp" + (numberTemporaryDatabase-2) + ".kmp"; 
 		if ((numberTemporaryDatabase < 2) && (!Files.exists(Paths.get(databasePath + path)))) {
 			System.out.println("File doesn't exist !");
 			return null;
@@ -64,7 +64,7 @@ public class DatabaseSerializer {
 	 * @return the relative path of the file
 	 */
 	public String getTemporaryFileName() {
-		return temporaryDirectory + "tmp" + numberTemporaryDatabase + ".txt";
+		return temporaryDirectory + "tmp" + numberTemporaryDatabase + ".kmp";
 	}
 	
 	/**
@@ -72,7 +72,7 @@ public class DatabaseSerializer {
 	 * @return the relative path of the file
 	 */
 	public String getNextTemporaryFileName() {
-		String path = temporaryDirectory + "tmp" + numberTemporaryDatabase + ".txt"; 
+		String path = temporaryDirectory + "tmp" + numberTemporaryDatabase + ".kmp"; 
 		if (!Files.exists(Paths.get(databasePath + path))) {
 			System.out.println("File doesn't exist !");
 			return null;
@@ -121,6 +121,19 @@ public class DatabaseSerializer {
 	public void insertCommand(Database db) throws IOException {
 		this.db = db;
 		db.writeObject(databasePath + getTemporaryFileName());
+		db.writeObject(databasePath + databaseFileName);
+    	incrementNumberTemporaryDatabase();
+	}
+	
+	/**
+	 * Creates a new file containing the database serialized 
+	 * @param db the current database used by the user
+	 * @throws IOException
+	 */
+	public void inspectRelationsCommand(Database db) throws IOException {
+		this.db = db;
+		db.writeObject(databasePath + getTemporaryFileName());
+		db.writeObject(databasePath + databaseFileName);
     	incrementNumberTemporaryDatabase();
 	}
 	
@@ -135,6 +148,7 @@ public class DatabaseSerializer {
 		if (path != null) {
 			decrementNumberTemporaryDatabase();
 			db = db.readObject(db, databasePath + path);
+			db.writeObject(databasePath + databaseFileName);
 		}
 		return db;
 	}
@@ -149,6 +163,7 @@ public class DatabaseSerializer {
 		String path = getNextTemporaryFileName();
 		if (path != null) {
 			db = db.readObject(db, databasePath + path);
+			db.writeObject(databasePath + databaseFileName);
 			incrementNumberTemporaryDatabase();
 		}
 		return db;
@@ -166,6 +181,7 @@ public class DatabaseSerializer {
 			System.out.println("File doesn't exist !");
 		else {
 			db = db.readObject(db, path);
+			db.writeObject(databasePath + databaseFileName);
 			db.writeObject(databasePath + getTemporaryFileName());
 			incrementNumberTemporaryDatabase();
 		}
@@ -192,6 +208,7 @@ public class DatabaseSerializer {
 	 */
 	public void resetCommand(Database db) throws IOException {		
 		this.db = db;
+		db.writeObject(databasePath + databaseFileName);
 		db.writeObject(databasePath + getTemporaryFileName());
 		incrementNumberTemporaryDatabase();
 	}
@@ -213,7 +230,7 @@ public class DatabaseSerializer {
 	 * @throws IOException
 	 */
 	public void quitCommand() throws IOException {
-		db.writeObject(databasePath + databaseFileName);
+		//db.writeObject(databasePath + databaseFileName);
 		deleteTemporaryDatabaseDirectory();
 	}
 }

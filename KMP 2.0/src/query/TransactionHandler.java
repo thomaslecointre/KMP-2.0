@@ -1,12 +1,14 @@
 package query;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import model.Data;
 import model.Relation;
-import model.Relation.Properties;
 import model.Subject;
 import persistence.Database;
 import persistence.DatabaseSerializer;
@@ -88,6 +90,27 @@ public class TransactionHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Changes the language of KMP
+	 * @param language country code top-level domains available on : https://en.wikipedia.org/wiki/List_of_Internet_top-level_domains#Country_code_top-level_domains
+	 */
+	public void requestLanguage(String language) {
+		//TODO analysis with our languages available
+		
+		FileOutputStream fileOut;
+		try {
+			fileOut = new FileOutputStream(this.getDatabaseSerializer().getDatabasePath() + "config.kmpc");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(language);
+			out.close();
+			fileOut.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	/**
