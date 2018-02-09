@@ -328,6 +328,10 @@ public class Database implements Serializable {
 		}
 		return relations;
 	}
+
+	public void replaceEntry(int key, EntryData entryData) {
+		table.put(key, entryData);
+	}
 	
 	/*
 	public static void main(String[] args) {

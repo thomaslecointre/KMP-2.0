@@ -20,7 +20,7 @@ public class TransactionHandler {
 
 	private Database database;
 	private DatabaseSerializer databaseSerializer;
-	private boolean fromRelationQualifierAdjustment = false;
+	private boolean relationPropertyApplicationShouldControlInsertion = false;
 
 	public TransactionHandler() {
 		database = new Database();
@@ -124,56 +124,52 @@ public class TransactionHandler {
 			subjectId = entryData.getIDSubject();
 		}
 
-		if (splitInsertion.length > 1) {
-			for (int index = 1; index + 1 < splitInsertion.length; index++) {
-				Relation relation = database.findRelation(splitInsertion[index]);
-				boolean applyRelationProperties = false;
-				if (relation == null) {
-					relation = new Relation(splitInsertion[index]);
-					database.addRelation(relation);
-				} else {
-					applyRelationProperties = true;
-				}
+		boolean partialInsertionRequired = false;
+		
+		for (int index = 1; index + 1 < splitInsertion.length; index++) {
+			
+			Relation relation = database.findRelation(splitInsertion[index]);
+			boolean existingRelationNeedsUpdating = false;
+			
+			if (relation == null) {
+				relation = new Relation(splitInsertion[index]);
+				database.addRelation(relation);
+			} else {
+				existingRelationNeedsUpdating = true;
+				partialInsertionRequired = true;
+			}
 
-				Subject subject = database.findSubject(splitInsertion[++index]);
+			Subject subject = database.findSubject(splitInsertion[++index]);
 
-				if (subject == null) {
-					subject = new Subject(splitInsertion[index]);
-					requestInsert(splitInsertion[index]);
-				}
-				
-				// Check whether or not the relation's properties validate the insertion.
-				boolean canInsert = true;
-				for (Relation.Properties property : Relation.Properties.values()) {
-					switch (property) {
-					case REFLEXIVE:
-						break;
-					case IRREFLEXIVE:
-						if (relation.isPropertyActive(Relation.Properties.IRREFLEXIVE)) {
-							if (subjectId.equals(subject)) {
-								canInsert = false;
-							}
-						} 
-						break;
-					case SYMMETRIC:
-						break;
-					case ANTISYMMETRIC:
-						// if R(a,b) with a != b, then R(b,a) must not hold.
-						if (relation.isPropertyActive(Relation.Properties.ANTISYMMETRIC)) {
-							if (!subjectId.equals(subject)) {
-								int subjectKey = database.findKey(subject);
-								EntryData subjectEntryData = database.getEntryData(subjectKey);
-								if (subjectEntryData.hasRelation(relation)) {
-									if (subjectEntryData.getSubjects(relation).contains(subjectId)) {
-										canInsert = false;
-									}
-								}
-							}
+			if (subject == null) {
+				subject = new Subject(splitInsertion[index]);
+				requestInsert(splitInsertion[index]);
+			}
+			
+			// Check whether or not the relation's properties validate the insertion.
+			boolean canInsert = true;
+			for (Relation.Properties property : Relation.Properties.values()) {
+				switch (property) {
+				case REFLEXIVE:
+					if (relation.isPropertyActive(Relation.Properties.REFLEXIVE)) {
+						if (!subjectId.equals(subject)) {
+							canInsert = false;
 						}
-						break;
-					case ASYMMETRIC:
-						// In this case a and b can be the same or different.
-						if (relation.isPropertyActive(Relation.Properties.ANTISYMMETRIC)) {
+					}
+					break;
+				case IRREFLEXIVE:
+					if (relation.isPropertyActive(Relation.Properties.IRREFLEXIVE)) {
+						if (subjectId.equals(subject)) {
+							canInsert = false;
+						}
+					} 
+					break;
+				case SYMMETRIC:
+					break;
+				case ANTISYMMETRIC:
+					// if R(a,b) with a != b, then R(b,a) must not hold.
+					if (relation.isPropertyActive(Relation.Properties.ANTISYMMETRIC)) {
+						if (!subjectId.equals(subject)) {
 							int subjectKey = database.findKey(subject);
 							EntryData subjectEntryData = database.getEntryData(subjectKey);
 							if (subjectEntryData.hasRelation(relation)) {
@@ -182,32 +178,54 @@ public class TransactionHandler {
 								}
 							}
 						}
-						break;
-					
-					case TRANSITIVE:
-						
-						break;
 					}
-				}
+					break;
+				case ASYMMETRIC:
+					// In this case a and b can be the same or different.
+					if (relation.isPropertyActive(Relation.Properties.ANTISYMMETRIC)) {
+						int subjectKey = database.findKey(subject);
+						EntryData subjectEntryData = database.getEntryData(subjectKey);
+						if (subjectEntryData.hasRelation(relation)) {
+							if (subjectEntryData.getSubjects(relation).contains(subjectId)) {
+								canInsert = false;
+							}
+						}
+					}
+					break;
 				
-				if (canInsert) {
-					entryData.put(relation, subject);
-				}
-
-				if (applyRelationProperties && !fromRelationQualifierAdjustment) {
-					fromRelationQualifierAdjustment = true;
-					applyRelationProperties(relation);
+				case TRANSITIVE:
+					
+					break;
 				}
 			}
-		}
+			
+			if (canInsert) {
+				entryData.put(relation, subject);
+			}
+			
+			if (partialInsertionRequired) {
+				if (key == 0) {
+					database.insert(entryData);
+				} else {
+					database.replaceEntry(key, entryData);
+				}
+			}
 
-		if (newEntryData) {
+			if (existingRelationNeedsUpdating && !relationPropertyApplicationShouldControlInsertion) {
+				applyRelationProperties(relation);
+			}
+		}
+		
+		if (newEntryData && !partialInsertionRequired) {
 			database.insert(entryData);
 		}
 
 	}
 
 	private void applyRelationProperties(Relation relation) {
+		
+		relationPropertyApplicationShouldControlInsertion = true;
+		
 		for (Relation.Properties property : Relation.Properties.values()) {
 			if (relation.isPropertyActive(property)) {
 				switch (property) {
@@ -231,6 +249,7 @@ public class TransactionHandler {
 					break;
 				}
 			} else {
+				/*
 				switch (property) {
 				case REFLEXIVE:
 					removeReflexivity(relation);
@@ -251,9 +270,11 @@ public class TransactionHandler {
 					removeTransitivity(relation);
 					break;
 				}
+				*/
 			}
-			fromRelationQualifierAdjustment = false;
 		}
+		
+		relationPropertyApplicationShouldControlInsertion = false;
 	}
 
 	// TODO
