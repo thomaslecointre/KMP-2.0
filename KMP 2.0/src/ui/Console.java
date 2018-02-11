@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 import model.Relation.Properties;
 import query.Result;
 import query.TransactionHandler;
+import ui.Internationalization.Commands;
+import ui.Internationalization.Languages;
 
 /**
  * This class is the closest to the user. It interacts with TransactionHandler for requests.
@@ -16,75 +18,105 @@ import query.TransactionHandler;
 public class Console implements Runnable {
 
 	private Scanner scanner;
-	private TransactionHandler transactionHandler;
+	private TransactionHandler transactionHandler = new TransactionHandler();
+	private static Internationalization internationalization = new Internationalization();
 	private boolean active;
 
 	/**
 	 * Enumeration of all types of commands the user can use.
 	 */
 	private enum Modes {
-		INSERT("insert"), QUERY("query"), INSPECT_RELATIONS("inspect relations"), UNDO("undo"), REDO("redo"), IMPORT("import"), EXPORT("export"), RESET("reset"), SHOW("show"), HELP("help"), LANGUAGE("language"), BACK("back"), QUIT("quit");
+		INSERT(commandName("insert")), QUERY(commandName("query")), INSPECT_RELATIONS(commandName("inspect relations")), UNDO(commandName("undo")), REDO(commandName("redo")), IMPORT(commandName("import")), EXPORT(commandName("export")), RESET(commandName("reset")), SHOW(commandName("show")), HELP(commandName("help")), LANGUAGE(commandName("language")), BACK(commandName("back")), QUIT(commandName("quit"));
 
 		private final String REPRESENTATION;
+		private static Internationalization internationalization = new Internationalization();
 
 		Modes(String representation) {
 			REPRESENTATION = representation;
+		}
+		
+		static String commandName(String mode) {
+			switch (mode) {
+			case "insert":
+				return internationalization.getMessage(Commands.INSERT);
+			case "inspect_relations":
+				return internationalization.getMessage(Commands.INSPECT_RELATIONS);
+			case "query":
+				return internationalization.getMessage(Commands.QUERY);
+			case "undo":
+				return internationalization.getMessage(Commands.UNDO);
+			case "redo":
+				return internationalization.getMessage(Commands.REDO);
+			case "import":
+				return internationalization.getMessage(Commands.IMPORT);
+			case "export":
+				return internationalization.getMessage(Commands.EXPORT);
+			case "reset":
+				return internationalization.getMessage(Commands.RESET);
+			case "show":
+				return internationalization.getMessage(Commands.SHOW);
+			case "help":
+				return internationalization.getMessage(Commands.HELP);
+			case "language":
+				return internationalization.getMessage(Commands.LANGUAGE);
+			case "back":
+				return internationalization.getMessage(Commands.BACK);
+			case "quit":
+				return internationalization.getMessage(Commands.QUIT);
+			}
+			return null;
 		}
 
 		void helpMessage() {
 			switch (this) {
 			case INSERT:
-				System.out.println(
-						"\nThe parity of a word's index matters. Odd indexed words are subjects. Even indexed words are entry headers.");
-				System.out.println("\nAn entry is comprised of a primary key, headers and values. A triple is a combination of the primary key, a header and its corresponding value.");
+				System.out.println(internationalization.getMessage(Commands.INSERT_TEXT));
 				break;
 			case QUERY:
-				System.out.println("\nThe query engine uses a SPARQL inspired syntax and requires the user to input queries in the following format:");
-				System.out.println("\n?X, ?Y : ?X is ?Z & ?Z has 5");
-				System.out.println("\nAll variables prefixed by '?' located before the colon are those that will be displayed.");
-				System.out.println("\nEverything written after the colon equates to the WHERE block in a SPARQL query. Each line is seperated by the '&' character.");
+				System.out.println(internationalization.getMessage(Commands.QUERY_TEXT));
 				break;
 			case INSPECT_RELATIONS:
-				System.out.println("\nDecide which properties are appropriate for a particular relation.");
-				System.out.println("\nThe database will automatically adjust itself in accordance with each property adjustment.");
+				System.out.println(internationalization.getMessage(Commands.INSPECT_RELATIONS_TEXT));
 				break;
 			case HELP:
 				listOfCommands();
 				break;
 			case BACK:
-				System.out.println("\nGoing back...");
+				System.out.println(internationalization.getMessage(Commands.BACK_TEXT));
 				break;
 			case UNDO:
-				System.out.println("\nLoading previous state...");
+				System.out.println(internationalization.getMessage(Commands.UNDO_TEXT));
 				break;
 			case REDO:
-				System.out.println("\nLoading next state...");
+				System.out.println(internationalization.getMessage(Commands.REDO_TEXT));
 				break;
 			case IMPORT:
-				System.out.println("\nImporting Database...");
+				System.out.println(internationalization.getMessage(Commands.IMPORT_TEXT));
 				break;
 			case EXPORT:
-				System.out.println("\nExporting Database...");
+				System.out.println(internationalization.getMessage(Commands.EXPORT_TEXT));
 				break;
 			case RESET:
-				System.out.println("\nResetting database...");
+				System.out.println(internationalization.getMessage(Commands.RESET_TEXT));
 				break;
 			case LANGUAGE:
-				System.out.println("\nChanging language...");
+				System.out.println(internationalization.getMessage(Commands.LANGUAGE_TEXT));
 				break;
 			case QUIT:
-				System.out.println("\nExiting application...");
+				System.out.println(internationalization.getMessage(Commands.QUIT_TEXT));
 				break;
 			default:
 				break;
 			}
 		}
-
 	}
 
 	private Modes mode;
 	private Modes parentMode;
 	private String promptMessage = "\n> ";
+	
+	public Console() {
+	}
 	
 	/**
 	 * Sets prompt message.
@@ -107,7 +139,7 @@ public class Console implements Runnable {
 		System.out.print(promptMessage);
 	}
 
-	private String illegalCommand = "\nIllegal command!";
+	private String illegalCommand = internationalization.getMessage(Commands.ILLEGAL_COMMAND);
 
 	/**
 	 * Prints out the illegal command message to the standard output.
@@ -134,8 +166,26 @@ public class Console implements Runnable {
 		}
 		return false;
 	}
-
-	public Console() {
+	
+	/**
+	 * Changes the language of KMP
+	 * @param language country code top-level domains available on : https://en.wikipedia.org/wiki/List_of_Internet_top-level_domains#Country_code_top-level_domains
+	 */
+	public void requestLanguage(String language) {
+		boolean isLanguage = false;
+		for (Languages lang : Languages.values()) {
+			if (language.contains(lang.getLanguage())) {
+				isLanguage = true;
+				internationalization.setLanguage(lang);
+				try {					
+					internationalization.changeLanguage(language);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		if (!isLanguage)
+			internationalization.getMessage(Commands.LANGUAGE_INCORRECT);
 	}
 
 	@Override
@@ -163,11 +213,11 @@ public class Console implements Runnable {
 	 * Lists all user commands.
 	 */
 	private static void listOfCommands() {
-		System.out.println("Possible commands...\n");
+		System.out.println(internationalization.getMessage(Commands.SHOW_TEXT));
 		for (Modes mode : Modes.values()) {
 			System.out.println(mode.REPRESENTATION);
 		}
-		System.out.println("\nUse 'back' to return to the main menu.");
+		System.out.println(internationalization.getMessage(Commands.BACK_COMMAND));
 	}
 
 	/**
@@ -222,25 +272,25 @@ public class Console implements Runnable {
 		
 		//check the number of words
 		if (tokens.length != 3) {
-			System.out.println("Incorrect : number of words");
+			System.out.println(internationalization.getMessage(Commands.INSPECT_RELATION_INCORRECT_NUMBER_WORDS));
 			return false;
 		}
 		
 		//check if the first token is a relation
 		if (!isKeyWordRelation(tokens[0])) {
-			System.out.println("Incorrect : first token isn't a relation");
+			System.out.println(internationalization.getMessage(Commands.INSPECT_RELATION_INCORRECT_FIRST_TOKEN));
 			return false;
 		}
 		
 		//check if the second token is "is" or "not"
 		if (!isKeyWordRelationIsNot(tokens[1])) {
-			System.out.println("Incorrect : second token is different of 'is' or 'not'");
+			System.out.println(internationalization.getMessage(Commands.INSPECT_RELATION_INCORRECT_SECOND_TOKEN));
 			return false;
 		}
 		
 		//check if the third token is a property of a relation
 		if (!isKeyWordRelationProperty(tokens[2])) {
-			System.out.println("Incorrect : third token isn't a property of Relation");
+			System.out.println(internationalization.getMessage(Commands.INSPECT_RELATION_INCORRECT_THIRD_TOKEN));
 			return false;
 		}
 		
@@ -257,14 +307,14 @@ public class Console implements Runnable {
 		
 		//check the parity (number of words)
 		if (tokens.length < 3 || tokens.length % 2 == 0) {
-			System.out.println("Incorrect : number of words");
+			System.out.println(internationalization.getMessage(Commands.INSERTION_INCORRECT_NUMBER_WORDS));
 			return false;
 		}
 		
 		//check the presence of keywords
 		for (String token : tokens) {
 			if (isKeyWord(token)) {
-				System.out.println("Incorrect : keyword in the tokens");
+				System.out.println(internationalization.getMessage(Commands.INSERTION_INCORRECT_KEYWORD_TOKEN));
 				return false;
 			}
 		}
@@ -273,7 +323,7 @@ public class Console implements Runnable {
 		Pattern patternValidTokens = Pattern.compile("\\w+\\s+\\w+\\s+\\w+(\\s+\\w+\\s+\\w+)*");
 		Matcher matcherValidTokens = patternValidTokens.matcher(command);
 		if (!matcherValidTokens.matches()) {
-			System.out.println("Incorrect : command should be like 'a b c' or 'laurent is man is Married Sophie worksFor ENSISA'");
+			System.out.println(internationalization.getMessage(Commands.INSERTION_INCORRECT_COMMAND_STRUCTURE));
 			return false;
 		}
 		
@@ -281,7 +331,7 @@ public class Console implements Runnable {
 		Pattern patternPresenceID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);
 		Matcher matcherPresenceID = patternPresenceID.matcher(command);
 		if (matcherPresenceID.find()) {
-			System.out.println("Incorrect : 'id' is not allowed");
+			System.out.println(internationalization.getMessage(Commands.INSERTION_INCORRECT_ID));
 			return false;
 		}
 		
@@ -293,10 +343,10 @@ public class Console implements Runnable {
 	 * @param command a string written by the user
 	 * @return a boolean if the command is a valid query
 	 */
-	private static boolean validateQuery(String command) {
+	private boolean validateQuery(String command) {
 		//check the global structure
 		if (command.split(":").length != 2) {
-			System.out.println("Incorrect : structure should be 'data : query' with no other ':'");
+			System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_STRUCTURE));
 			return false;
 		}
 		String data = command.split(":")[0], where = command.split(":")[1];
@@ -305,7 +355,7 @@ public class Console implements Runnable {
 		Pattern patternDataStructure = Pattern.compile("\\?\\w+\\s*(,\\s*\\?\\w+\\s*)*");
 		Matcher matcherDataStruture = patternDataStructure.matcher(data);
 		if (!matcherDataStruture.matches()) {
-			System.out.println("Incorrect : data should be like '?x' or '?x, ?y, ?z'");
+			System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_DATA));
 			return false;
 		}
 		
@@ -315,7 +365,7 @@ public class Console implements Runnable {
 		ArrayList<String> variables = new ArrayList<String>();
 		while(matcherDataVariable.find()) {
             if (variables.contains(matcherDataVariable.group())) {
-        		System.out.println("Incorrect : same name in data " + matcherDataVariable.group());
+        		System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_DATA_NAME) + matcherDataVariable.group());
         		return false;
             }
             else variables.add(matcherDataVariable.group());
@@ -325,7 +375,7 @@ public class Console implements Runnable {
 		Pattern patternWhereStructure = Pattern.compile("(\\s+\\??\\w+){3}(\\s+&(\\s+\\??\\w+){3})*");
 		Matcher matcherWhereStruture = patternWhereStructure.matcher(where);
 		if (!matcherWhereStruture.matches()) {
-			System.out.println("Incorrect : where should be like '?x ?y ?z' or '?laurent is man & laurent ?worksFor ENSISA'");
+			System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_WHERE_STRUCTURE));
 			return false;
 		}
 		
@@ -333,7 +383,7 @@ public class Console implements Runnable {
 		Pattern patternWhereID = Pattern.compile("\\s+(id)\\s+", Pattern.CASE_INSENSITIVE);
 		Matcher matcherWhereID = patternWhereID.matcher(where);
 		if (matcherWhereID.find()) {
-			System.out.println("Incorrect : 'id' is not allowed");
+			System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_ID));
 			return false;
 		}
 		
@@ -345,7 +395,7 @@ public class Console implements Runnable {
             whereVariables.add(matcherUnusedVariable.group());
         }
 		if (!whereVariables.containsAll(variables)) {
-			System.out.println("Incorrect : unused variable in the data, data : " + variables + " where : " + whereVariables);
+			System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_UNUSED_VARIABLE) + variables + " where : " + whereVariables);
 			return false;
 		}
 		
@@ -360,7 +410,7 @@ public class Console implements Runnable {
         }
 		for (String relation : relations) {
 			if (ids.contains(relation) || subjects.contains(relation)) {
-				System.out.println("Incorrect : conflict between relations and IDs/subjects");
+				System.out.println(internationalization.getMessage(Commands.QUERY_INCORRECT_RELATION_AT_EXTREMITY));
 				return false;
 			}
 		}
@@ -373,11 +423,11 @@ public class Console implements Runnable {
 	 * @param command a string written by the user
 	 * @return a boolean if the command is a valid import
 	 */
-	private static boolean validateImport(String command) {
+	private boolean validateImport(String command) {
 		Pattern patternPathStructure = Pattern.compile(".*\\.kmp");
 		Matcher matcherPathStruture = patternPathStructure.matcher(command);
 		if (!matcherPathStruture.matches()) {
-			System.out.println("Incorrect : path sould finished by .kmp");
+			System.out.println(internationalization.getMessage(Commands.PATH_INCORRECT));
 			return false;
 		}
 		return true;
@@ -388,11 +438,11 @@ public class Console implements Runnable {
 	 * @param command a string written by the user
 	 * @return a boolean if the command is a valid export
 	 */
-	private static boolean validateExport(String command) {
+	private boolean validateExport(String command) {
 		Pattern patternPathStructure = Pattern.compile(".*\\.kmp");
 		Matcher matcherPathStruture = patternPathStructure.matcher(command);
 		if (!matcherPathStruture.matches()) {
-			System.out.println("Incorrect : path sould finished by .kmp");
+			System.out.println(internationalization.getMessage(Commands.PATH_INCORRECT));
 			return false;
 		}
 		return true;
@@ -403,15 +453,16 @@ public class Console implements Runnable {
 	 * @param command a string written by the user
 	 * @return a boolean if the command is a valid language
 	 */
-	private static boolean validateLanguage(String command) {
-		
-		//TODO use file adapted
-		
-		String languages = "fr|en|nz|be|de|es|at|au";
-		Pattern patternPathStructure = Pattern.compile(languages);
+	private boolean validateLanguage(String command) {
+		Languages[] languages = Languages.values();
+		StringBuilder s = new StringBuilder(languages[0].getLanguage());
+		for (int i = 1; i < languages.length; i++) {
+			s.append("|" + languages[i].getLanguage());
+		}
+		Pattern patternPathStructure = Pattern.compile(s.toString());
 		Matcher matcherPathStruture = patternPathStructure.matcher(command);
 		if (!matcherPathStruture.matches()) {
-			System.out.println("Incorrect : not a national top-level domain");
+			System.out.println(internationalization.getMessage(Commands.LANGUAGE_INCORRECT));
 			return false;
 		}
 		return true;
@@ -421,8 +472,7 @@ public class Console implements Runnable {
 	 * Top level user input handling function.
 	 */
 	private void prompt() {
-		System.out.println("Welcome to Knowledge Management Platform");
-		System.out.println("----------------------------------------");
+		System.out.println(internationalization.getMessage(Commands.WELCOME_MESSAGE));
 		listOfCommands();
 		while (active) {
 			promptMessage();
@@ -509,7 +559,7 @@ public class Console implements Runnable {
 					setPromptMessage(Modes.LANGUAGE);
 					String language = nextCommand(Modes.LANGUAGE);
 					if (language != null) {
-						transactionHandler.requestLanguage(language);
+						requestLanguage(language);
 						transactionHandler.requestShow();
 					}
 					resetPromptMessage();
