@@ -16,4 +16,16 @@ public abstract class Data implements Serializable {
         return id;
     }
     
+    @Override
+    public boolean equals(Object o) {
+    	if (!(o instanceof Data)) {
+    		return false;
+    	}
+    	if (o == this) {
+    		return true;
+    	}
+    	Data data = (Data) o;
+		return this.id.equals(data.getId());
+    }
+    
 }

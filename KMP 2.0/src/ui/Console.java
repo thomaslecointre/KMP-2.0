@@ -160,7 +160,7 @@ public class Console implements Runnable {
 	 * Lists all user commands.
 	 */
 	private static void listOfCommands() {
-		System.out.println("Possible commands...\n");
+		System.out.println("\nPossible commands...\n");
 		for (Modes mode : Modes.values()) {
 			System.out.println(mode.REPRESENTATION);
 		}
@@ -419,7 +419,7 @@ public class Console implements Runnable {
 	 * Top level user input handling function.
 	 */
 	private void prompt() {
-		System.out.println("Welcome to Knowledge Management Platform");
+		System.out.println("\nWelcome to Knowledge Management Platform");
 		System.out.println("----------------------------------------");
 		listOfCommands();
 		while (active) {

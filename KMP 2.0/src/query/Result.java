@@ -13,9 +13,11 @@ public class Result {
 	private HashMap<String, ArrayList<Data>> selectorMappings;
 	private HashMap<String, Context.DataTypes> selectorTypes;
 	private Database database;
+	private boolean associatedView;
 	
-	protected Result(Database database) {
+	protected Result(Database database, boolean associatedView) {
 		this.database = database;
+		this.associatedView = associatedView;
 		selectorMappings = new HashMap<>();
 		selectorTypes = new HashMap<>();
 	}
@@ -50,11 +52,22 @@ public class Result {
 			
 			res.append("\n[");
 			
+			ArrayList<Data> alreadyFound = new ArrayList<>();
 			for (Data data : datafield) {
 				if (selectorTypes.get(identifier).equals(Context.DataTypes.SUBJECT)) {
-					res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+					if (!alreadyFound.contains(data) && !associatedView) {
+						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+						alreadyFound.add(data);
+					} else if (associatedView) {
+						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+					}
 				} else if (selectorTypes.get(identifier).equals(Context.DataTypes.RELATION)) {
-					res.append("\n\t").append("Relation : ").append(data);
+					if (!alreadyFound.contains(data) && !associatedView) {
+						res.append("\n\t").append("Relation : ").append(data);
+						alreadyFound.add(data);
+					} else if (associatedView) {
+						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+					}
 				}
 			}
 			
