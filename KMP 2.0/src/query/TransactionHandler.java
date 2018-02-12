@@ -154,6 +154,10 @@ public class TransactionHandler {
 						if (!subjectId.equals(subject)) {
 							canInsert = false;
 						}
+					} else {
+						if (subjectId.equals(subject)) {
+							canInsert = false;
+						}
 					}
 					break;
 				case IRREFLEXIVE:

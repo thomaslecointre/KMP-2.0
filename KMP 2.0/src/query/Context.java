@@ -40,6 +40,8 @@ public class Context {
 	private void incrementVariableIndex() {
 		globalVariableIndex++;
 	}
+	
+	private boolean associatedView = false;
 
 	public Context(Database database) {
 		this.database = database;
@@ -77,10 +79,7 @@ public class Context {
 		String whereStatement = splitQuery[1]; // where -> ?X is ?Y & ?X has ?Z
 		// ...
 		// Split each WHERE substatement by '&'
-		String[] conditionStatements = whereStatement.split("&"); // condition
-		// statement
-		// -> ?X is
-		// ?Y
+		String[] conditionStatements = whereStatement.split("&"); // condition statement -> ?X is ?Y
 		// Remove unnecessary whitespace around each condition statement
 		conditionStatements = Arrays.asList(conditionStatements).stream().map(String::trim).toArray(String[]::new);
 
@@ -213,7 +212,7 @@ public class Context {
 											line.add(database.getID(key));
 											currentMatrix.add(line);
 										} else {
-											System.out.println("EntryData did not contain subject");
+											// System.out.println("EntryData did not contain subject");
 										}
 									}
 								}
@@ -328,6 +327,11 @@ public class Context {
 				currentVariables.replace(variable, variableValues);
 				currentVariableIndex++;
 			}
+			
+			// Determine whether or not an associated view is required. The first occurence of intertwined conditional variables sets the field to true.
+			if (currentVariables.size() > 1) {
+				associatedView = true;
+			}
 
 			// Integrate current variable values into the global variable values
 			// pool
@@ -375,7 +379,9 @@ public class Context {
 							Data[] newDatafield = new Data[globalVariableIndices.size()];
 							for (String variable : globalVariables.keySet()) {
 								int globalVariableIndex_ = globalVariableIndices.get(variable);
-								newDatafield[globalVariableIndex_] = datafield[globalVariableIndex_];
+								if (datafield.length > globalVariableIndex_) { // Check if globalVariableIndex_ is applicable to the current globalMatrix
+									newDatafield[globalVariableIndex_] = datafield[globalVariableIndex_];
+								}
 							}
 							for (String variable : currentVariables.keySet()) {
 								int globalVariableIndex_ = globalVariableIndices.get(variable);
@@ -492,7 +498,7 @@ public class Context {
 			}
 		}
 
-		Result result = new Result(database);
+		Result result = new Result(database, associatedView);
 		for (String selectorString : selectorStrings) {
 			ArrayList<Data> datafield = globalVariables.get(selectorString);
 			result.putData(selectorString, datafield);

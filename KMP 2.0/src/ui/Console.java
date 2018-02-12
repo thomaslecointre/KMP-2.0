@@ -469,7 +469,6 @@ public class Console implements Runnable {
 	}
 	
 	/**
-<<<<<<< HEAD
 	 * Checks if the command is a valid language
 	 * @param command a string written by the user
 	 * @return a boolean if the command is a valid language
@@ -490,8 +489,6 @@ public class Console implements Runnable {
 	}
 
 	/**
-=======
->>>>>>> refs/remotes/origin/develop
 	 * Top level user input handling function.
 	 */
 	private void prompt() {
