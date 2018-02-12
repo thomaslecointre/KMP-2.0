@@ -166,9 +166,9 @@ public class Database implements Serializable {
 		}
 		return 0;
 	}
-
-	public int findKey(Subject id) {
-		return findKey(id.getId());
+	
+	public int findKey(Subject subject) {
+		return findKey(subject.getId());
 	}
 
 	@Override
@@ -248,20 +248,36 @@ public class Database implements Serializable {
 		return table.keySet().contains(key);
 	}
 
-	
+	/**
+	 * Gets the primary index of the database
+	 * @return the primary index of the database
+	 */
 	public int getPrimaryIndex() {
 		return primaryIndex;
 	}
 	
+	/**
+	 * Creates a file at the path given in argument containing the database serialized
+	 * @param path the absolute path where the database will be saved
+	 * @throws IOException
+	 */
 	public void writeObject(String path) throws IOException {
 		FileOutputStream fileOut = new FileOutputStream(path);
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
 		out.writeObject(this);
 		out.close();
 		fileOut.close();
-		System.out.printf("\ndata serialized in " + path + "\n");
+		//System.out.printf("data serialized in " + path + "\n");
 	}
 
+	/**
+	 * Creates a database from the the file read at the path indicated in argument
+	 * @param db the previous database where the new one will be saved
+	 * @param path the absolute path where the file containing the future database is located
+	 * @return the database contained in the file
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public Database readObject(Database db, String path) throws IOException, ClassNotFoundException {
 		FileInputStream fileIn;
 		try {
@@ -273,7 +289,7 @@ public class Database implements Serializable {
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		System.out.println("\ndata read from " + path + "\n");
+		//System.out.println("data read from " + path + "\n");
 		return db;
 	}
 
@@ -281,6 +297,10 @@ public class Database implements Serializable {
 		return table.get(key).getID().getSubject();
 	}
 	
+	/**
+	 * Gets all the relations contained in the list of objects
+	 * @return all the relations of objects
+	 */
 	public ArrayList<Relation> getAllRelations() {
 		ArrayList<Relation> relations = new ArrayList<>();
 		for (Data data : objects) {
@@ -291,6 +311,11 @@ public class Database implements Serializable {
 		return relations;
 	}
 
+	/**
+	 * Replaces an entry of table by his key
+	 * @param key the key of the data to be replaced
+	 * @param entryData the new entrydata
+	 */
 	public void replaceEntry(int key, EntryData entryData) {
 		table.put(key, entryData);
 	}
