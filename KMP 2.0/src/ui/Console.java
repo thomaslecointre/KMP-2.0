@@ -49,7 +49,7 @@ public class Console implements Runnable {
 				System.out.println("\nThe database will automatically adjust itself in accordance with each property adjustment.");
 				break;
 			case HELP:
-				listOfCommands();
+				// listOfCommands();
 				break;
 			case BACK:
 				System.out.println("\nGoing back...");
