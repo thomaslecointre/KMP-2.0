@@ -53,22 +53,24 @@ public class Result {
 			res.append("\n[");
 			
 			ArrayList<Data> alreadyFound = new ArrayList<>();
+			int index = 0;
 			for (Data data : datafield) {
 				if (selectorTypes.get(identifier).equals(Context.DataTypes.SUBJECT)) {
 					if (!alreadyFound.contains(data) && !associatedView) {
 						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
 						alreadyFound.add(data);
 					} else if (associatedView) {
-						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+						res.append("\n\t").append(index).append(") Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
 					}
 				} else if (selectorTypes.get(identifier).equals(Context.DataTypes.RELATION)) {
 					if (!alreadyFound.contains(data) && !associatedView) {
 						res.append("\n\t").append("Relation : ").append(data);
 						alreadyFound.add(data);
 					} else if (associatedView) {
-						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+						res.append("\n\t").append(index).append(") Relation : ").append(data);
 					}
 				}
+				index++;
 			}
 			
 			res.append("\n]");

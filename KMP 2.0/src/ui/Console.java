@@ -35,8 +35,8 @@ public class Console implements Runnable {
 			switch (this) {
 			case INSERT:
 				System.out.println(
-						"\nThe parity of a word's index matters. Odd indexed words are subjects. Even indexed words are entry headers.");
-				System.out.println("\nAn entry is comprised of a primary key, headers and values. A triple is a combination of the primary key, a header and its corresponding value.");
+						"\nThe parity of a word's index (starting at 0) matters. Even indexed words are subjects. Odd indexed words are relations.");
+				System.out.println("\nAn entry is comprised of a primary key, headers and values. A triple is a combination of the primary key, a relation (header) and its corresponding value.");
 				break;
 			case QUERY:
 				System.out.println("\nThe query engine uses a SPARQL inspired syntax and requires the user to input queries in the following format:");
