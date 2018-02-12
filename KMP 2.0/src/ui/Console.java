@@ -27,41 +27,36 @@ public class Console implements Runnable {
 	 */
 	private enum Modes {
 
-		INSERT(commandName("insert")), QUERY(commandName("query")), INSPECT_RELATIONS(commandName("inspect relations")), UNDO(commandName("undo")), REDO(commandName("redo")), IMPORT(commandName("import")), EXPORT(commandName("export")), RESET(commandName("reset")), SHOW(commandName("show")), HELP(commandName("help")), LANGUAGE(commandName("language")), BACK(commandName("back")), QUIT(commandName("quit"));
-		private final String REPRESENTATION;
+		INSERT, QUERY, INSPECT_RELATIONS, UNDO, REDO, IMPORT, EXPORT, RESET, SHOW, HELP, LANGUAGE, BACK, QUIT;
 		private static Internationalization internationalization = new Internationalization();
-
-		Modes(String representation) {
-			REPRESENTATION = representation;
-		}
 		
-		static String commandName(String mode) {
+		String commandName(Modes mode) {
 			switch (mode) {
-			case "insert":
+			case INSERT:
 				return internationalization.getMessage(Commands.INSERT);
-			case "inspect_relations":
+			case INSPECT_RELATIONS:
 				return internationalization.getMessage(Commands.INSPECT_RELATIONS);
-			case "query":
+			case QUERY:
 				return internationalization.getMessage(Commands.QUERY);
-			case "undo":
+			case UNDO:
 				return internationalization.getMessage(Commands.UNDO);
-			case "redo":
+			case REDO:
 				return internationalization.getMessage(Commands.REDO);
-			case "import":
+			case IMPORT:
 				return internationalization.getMessage(Commands.IMPORT);
-			case "export":
+			case EXPORT:
 				return internationalization.getMessage(Commands.EXPORT);
-			case "reset":
+			case RESET:
 				return internationalization.getMessage(Commands.RESET);
-			case "show":
+			case SHOW:
 				return internationalization.getMessage(Commands.SHOW);
-			case "help":
+			case HELP:
 				return internationalization.getMessage(Commands.HELP);
-			case "language":
+			case LANGUAGE:
 				return internationalization.getMessage(Commands.LANGUAGE);
-			case "back":
+			case BACK:
 				return internationalization.getMessage(Commands.BACK);
-			case "quit":
+			case QUIT:
 				return internationalization.getMessage(Commands.QUIT);
 			}
 			return null;
@@ -122,7 +117,7 @@ public class Console implements Runnable {
 	 * Sets prompt message.
 	 */
 	private void setPromptMessage(Modes mode) {
-		promptMessage = "\n" + mode.REPRESENTATION + " > ";
+		promptMessage = "\n" + mode.commandName(mode) + " > ";
 	}
 	
 	/**
@@ -155,7 +150,7 @@ public class Console implements Runnable {
 	 */
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
-			if (command.contains(mode.REPRESENTATION)) {
+			if (command.contains(mode.commandName(mode))) {
 				if(mode == Modes.BACK) {
 					return false;
 				}
@@ -215,7 +210,7 @@ public class Console implements Runnable {
 	private static void listOfCommands() {
 		System.out.println(internationalization.getMessage(Commands.SHOW_TEXT));
 		for (Modes mode : Modes.values()) {
-			System.out.println(mode.REPRESENTATION);
+			System.out.println(mode.commandName(mode));
 		}
 		System.out.println(internationalization.getMessage(Commands.BACK_COMMAND));
 	}
@@ -622,7 +617,7 @@ public class Console implements Runnable {
 			modeDetected = false;
 			back = false;
 			for (Modes mode : Modes.values()) {
-				if (command.contains(mode.REPRESENTATION)) {
+				if (command.contains(mode.commandName(mode))) {
 					switch (mode) {
 					case INSERT:
 					case QUERY:
@@ -630,6 +625,7 @@ public class Console implements Runnable {
 					case IMPORT:
 					case EXPORT:
 					case RESET:
+					case LANGUAGE:
 						illegalCommand();
 						break;
 					case SHOW:
@@ -639,7 +635,7 @@ public class Console implements Runnable {
 						currentMode.helpMessage();
 						break;
 					case BACK:
-						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT) {
+						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT || currentMode == Modes.LANGUAGE) {
 							this.mode = null;
 							parentMode = null;
 							back = true;
@@ -689,6 +685,10 @@ public class Console implements Runnable {
 					break;
 				case EXPORT:
 					if (validateExport(command))
+						validEntry = true;
+					break;
+				case LANGUAGE:
+					if (validateLanguage(command))
 						validEntry = true;
 					break;
 				default:
