@@ -13,7 +13,9 @@ import model.Relation;
 import model.Subject;
 import persistence.Database;
 import persistence.EntryData;
-
+/**
+ * This class is used to parse the query of the user, finds all the values of a variable and generates a result.
+ */
 public class Context {
 
 	private ArrayList<Data[]> globalMatrix;

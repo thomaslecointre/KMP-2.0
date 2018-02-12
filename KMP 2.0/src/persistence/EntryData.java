@@ -130,6 +130,12 @@ public class EntryData implements Serializable {
 		return id;
 	}
 	
+	/**
+	 * Checks in the relationMap if the relation contains the subject
+	 * @param relation the relation searched
+	 * @param subject the subject searched
+	 * @return if the relation contains the subject or not
+	 */
 	public boolean relationContainsSubject(Relation relation, Subject subject) {
 		if (relationMap.get(relation).contains(subject)) {
 			return true;
@@ -137,19 +143,36 @@ public class EntryData implements Serializable {
 		return false;
 	}
 
+	/**
+	 * Deletes all the subjects of a relation
+	 * @param relation the relation that has to be purged
+	 */
 	public void purgeSubjectsFromRelation(Relation relation) {
 		relationMap.get(relation).clear();
 	}
 
+	/**
+	 * Deletes the subject from the list of the relation 
+	 * @param relation the relation containing the subject that has to be removed
+	 */
 	public void removeIdFromRelation(Relation relation) {
 		relationMap.get(relation).remove(this.id.getSubject());
 	}
 
+	/**
+	 * Gets the subject links to the ID
+	 * @return the subjects links to the ID
+	 */
 	public Subject getIDSubject() {
 		return this.id.getSubject();
 	}
 
-	public void removeSubjectFromRelation(Relation relation, Subject y) {
-		relationMap.get(relation).remove(y);
+	/**
+	 * Deletes a subject contained in a relation
+	 * @param relation the relation that has to be changed 
+	 * @param subject the subject that has to be removed
+	 */
+	public void removeSubjectFromRelation(Relation relation, Subject subject) {
+		relationMap.get(relation).remove(subject);
 	}
 }

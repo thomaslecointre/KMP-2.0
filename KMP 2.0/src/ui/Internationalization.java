@@ -25,6 +25,10 @@ public class Internationalization {
 			return LANGUAGE;
 		}
 		
+		/**
+		 * Generates a String composed of all the languages separated by a space
+		 * @return a String composed of all the languages separated by a space
+		 */
 		public String getAllLanguage_Country() {
 			StringBuilder s = new StringBuilder();
 			for (Languages language : Languages.values())
@@ -46,6 +50,10 @@ public class Internationalization {
 			return COMMAND;
 		}
 
+		/**
+		 * Generates a String composed of all the commands separated by a space
+		 * @return a String composed of all the commands separated by a space
+		 */
 		public String getAllCommands() {
 			StringBuilder s = new StringBuilder();
 			for (Commands command : Commands.values())
@@ -78,7 +86,7 @@ public class Internationalization {
 	}
 	
 	/**
-	 * Builds the architecture of the file system and loads the previous config built by the user if it exists 
+	 * Builds the architecture of the file system and loads the previous config file built by the user if it exists 
 	 * @return the database created or found
 	 * @throws Exception 
 	 */
@@ -108,6 +116,10 @@ public class Internationalization {
 		return path;
 	}
 
+	/**
+	 * Generates the RessourceBundle from the languages available
+	 * @return the RessourceBundle linked to the current language
+	 */
 	public ResourceBundle getRessourceBundle() {
 		switch (language.getLanguage()) {
 		case "de_DE":
@@ -133,10 +145,20 @@ public class Internationalization {
 		}
 	}
 
+	/**
+	 * Gets the message according to the command and the language from the config file
+	 * @param command a key corresponding to a command
+	 * @return the message corresponding to the command in the language of the config file
+	 */
 	public String getMessage(Commands command) {
 		return getRessourceBundle().getString(command.COMMAND);
 	}
 	
+	/**
+	 * read the language in the config file
+	 * @return the language read in the config file
+	 * @throws Exception
+	 */
 	public Languages readLanguage() throws Exception {
 		if (Files.exists(Paths.get(path))) {
 			FileInputStream fileIn = new FileInputStream(path);
@@ -148,6 +170,11 @@ public class Internationalization {
 		return language;
 	}
 	
+	/**
+	 * Modifies the config file, replacing the previous language by the new one
+	 * @param language the new language for the config file
+	 * @throws IOException
+	 */
 	public void changeLanguage(String language) throws IOException {
 		if (Files.exists(Paths.get(path))) {
 			FileOutputStream fileOut = new FileOutputStream(path);

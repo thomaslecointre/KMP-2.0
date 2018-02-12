@@ -11,6 +11,7 @@ public class Relation extends Data implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
 	public enum Properties implements Serializable {
 		REFLEXIVE, IRREFLEXIVE, SYMMETRIC, ANTISYMMETRIC, ASYMMETRIC, TRANSITIVE
 	}
@@ -42,6 +43,11 @@ public class Relation extends Data implements Serializable {
 		return id;
 	}
 
+	/**
+	 * Checks the state of a property
+	 * @param property an element of the Properties
+	 * @return the state of the property
+	 */
 	public boolean isPropertyActive(Properties property) {
 		return properties.get(property);
 	}

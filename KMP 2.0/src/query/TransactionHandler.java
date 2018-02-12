@@ -88,7 +88,7 @@ public class TransactionHandler {
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * Handles an insertion request.
 	 * 
@@ -309,6 +309,10 @@ public class TransactionHandler {
 		
 	}
 
+	/**
+	 * Sets the property irreflexive to false and adds the subject to the relation
+	 * @param relation the relation that has to be changed
+	 */
 	private void applyReflexivity(Relation relation) {
 		relation.setProperty(Relation.Properties.IRREFLEXIVE, false);
 		for (EntryData entryData : database.getAllEntries()) {
@@ -318,6 +322,10 @@ public class TransactionHandler {
 		}
 	}
 
+	/**
+	 * Sets the property reflexive to false and removes the subject from the relation
+	 * @param relation the relation that has to be changed
+	 */
 	private void applyIrreflexivity(Relation relation) {
 		relation.setProperty(Relation.Properties.REFLEXIVE, false);
 		for (EntryData entryData : database.getAllEntries()) {
@@ -327,6 +335,10 @@ public class TransactionHandler {
 		}
 	}
 
+	/**
+	 * Sets the property asymmetric to false and adds the symmetric relation to the database
+	 * @param relation the relation that has to be changed
+	 */
 	private void applySymmetry(Relation relation) {
 		
 		relation.setProperty(Relation.Properties.ASYMMETRIC, false);
@@ -353,6 +365,10 @@ public class TransactionHandler {
 	}
 	
 	// TODO	
+	/**
+	 * Sets the property symmetric to false, sets the property antisymmetric to true and deletes the relations symmetric 
+	 * @param relation the relation that has to be changed
+	 */
 	private void applyAsymmetry(Relation relation) {
 		
 		relation.setProperty(Relation.Properties.SYMMETRIC, false);
@@ -391,6 +407,10 @@ public class TransactionHandler {
 	}
 
 	// TODO
+	/**
+	 * Deletes the relations symmetric
+	 * @param relation the relation that has to be changed
+	 */
 	private void applyAntiSymmetry(Relation relation) {
 		int[] totalNumberOfEntries = new int[] { 0, 0 };
 		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
@@ -424,6 +444,11 @@ public class TransactionHandler {
 				|| totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
 	}
 
+	//TODO checks not to put reflexive relation 
+	/**
+	 * Adds the relations transitive
+	 * @param relation the relation that has to be changed
+	 */
 	private void applyTransitivity(Relation relation) {
 		int[] totalNumberOfEntries = new int[] { 0, 0 };
 		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
@@ -453,6 +478,11 @@ public class TransactionHandler {
 		System.out.println(database);
 	}
 
+	/**
+	 * Creates a context associated to the database and generates the result from the query given
+	 * @param query the request made by the user to search for data
+	 * @return the result of the query
+	 */
 	public Result requestQuery(String query) {
 		return new Context(database).generateResult(query);
 	}
@@ -466,6 +496,10 @@ public class TransactionHandler {
 	}
 
 	// TODO
+	/**
+	 * Parses the user input, updates the state of the property and applies the new property
+	 * @param command the input of the user
+	 */
 	public void updateRelation(String command) {
 		String[] splittedCommand = command.split(" ");
 		Relation relation = database.findRelation(splittedCommand[0]);
@@ -480,6 +514,10 @@ public class TransactionHandler {
 		applyRelationProperties(relation);
 	}
 
+	/**
+	 * Generates a string composed of the relations and the properties
+	 * @return the string composed of the relations and the properties
+	 */
 	public String showRelations() {
 		ArrayList<Relation> relations = database.getAllRelations();
 		StringBuilder res = new StringBuilder();
@@ -494,6 +532,10 @@ public class TransactionHandler {
 		return res.toString();
 	}
 
+	/**
+	 * Generates a string for pattern-matching to reconize a relation
+	 * @return a string for pattern-matching to reconize a relation
+	 */
 	public String patternMatcherRelations() {
 		ArrayList<Relation> relations = database.getAllRelations();
 		StringBuilder keywords = new StringBuilder();
@@ -506,5 +548,4 @@ public class TransactionHandler {
 
 		return keywords.toString();
 	}
-
 }

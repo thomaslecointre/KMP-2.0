@@ -26,8 +26,8 @@ public class Console implements Runnable {
 	 * Enumeration of all types of commands the user can use.
 	 */
 	private enum Modes {
-		INSERT(commandName("insert")), QUERY(commandName("query")), INSPECT_RELATIONS(commandName("inspect relations")), UNDO(commandName("undo")), REDO(commandName("redo")), IMPORT(commandName("import")), EXPORT(commandName("export")), RESET(commandName("reset")), SHOW(commandName("show")), HELP(commandName("help")), LANGUAGE(commandName("language")), BACK(commandName("back")), QUIT(commandName("quit"));
 
+		INSERT(commandName("insert")), QUERY(commandName("query")), INSPECT_RELATIONS(commandName("inspect relations")), UNDO(commandName("undo")), REDO(commandName("redo")), IMPORT(commandName("import")), EXPORT(commandName("export")), RESET(commandName("reset")), SHOW(commandName("show")), HELP(commandName("help")), LANGUAGE(commandName("language")), BACK(commandName("back")), QUIT(commandName("quit"));
 		private final String REPRESENTATION;
 		private static Internationalization internationalization = new Internationalization();
 
@@ -221,9 +221,9 @@ public class Console implements Runnable {
 	}
 
 	/**
-	 * Checks if the Modes enum are present in the string in parameter 
+	 * Checks if a Mode is present in the string in parameter 
 	 * @param s a text
-	 * @return a boolean if a Modes enum is present in the string
+	 * @return if a Mode is present in the string
 	 */
 	private boolean isKeyWord(String s) {
 		Modes[] modes = Modes.values();
@@ -238,6 +238,11 @@ public class Console implements Runnable {
         return matcher.find();
     }
 	
+	/**
+	 * Checks if a Relation is present in the string in parameter
+	 * @param s a text
+	 * @return if a Relation is present in the string
+	 */
 	private boolean isKeyWordRelation(String s) {
 		String keywords = transactionHandler.patternMatcherRelations();
 		
@@ -246,6 +251,11 @@ public class Console implements Runnable {
         return matcher.find();
     }
 	
+	/**
+	 * Checks if 'is' or 'not' is present in the string in parameter
+	 * @param s a text
+	 * @return if 'is' or 'not' is present in the string
+	 */
 	private boolean isKeyWordRelationIsNot(String s) {
 		String keywords = "is|not";
 		
@@ -254,6 +264,11 @@ public class Console implements Runnable {
         return matcher.find();
     }
 	
+	/**
+	 * Checks if a Property is present in the string in parameter
+	 * @param s a text
+	 * @return Checks if a Property is present in the string
+	 */
 	private boolean isKeyWordRelationProperty(String s) {
 		Properties[] properties = Properties.values();
 		StringBuilder keywords = new StringBuilder();
@@ -267,6 +282,11 @@ public class Console implements Runnable {
         return matcher.find();
     }
 	
+	/**
+	 * Checks if the command is a valid inspect relation query
+	 * @param command an inspect relation command
+	 * @return if the command is a valid inspect relation query
+	 */
 	private boolean validateInspectRelation(String command) {
 		String[] tokens = command.split(" ");
 		
@@ -299,8 +319,8 @@ public class Console implements Runnable {
 	
 	/**
 	 * Checks if the command is a valid insertion
-	 * @param command a string written by the user 
-	 * @return a boolean if the command is a valid insertion
+	 * @param command an insertion command
+	 * @return if the command is a valid insertion
 	 */
 	private boolean validateInsertion(String command) {
 		String[] tokens = command.split(" ");
@@ -340,8 +360,8 @@ public class Console implements Runnable {
 
 	/**
 	 * Checks if the command is a valid query
-	 * @param command a string written by the user
-	 * @return a boolean if the command is a valid query
+	 * @param command a query command
+	 * @return if the command is a valid query
 	 */
 	private boolean validateQuery(String command) {
 		//check the global structure
@@ -421,7 +441,7 @@ public class Console implements Runnable {
 	/**
 	 * Checks if the command is a valid import
 	 * @param command a string written by the user
-	 * @return a boolean if the command is a valid import
+	 * @return if the command is a valid import
 	 */
 	private boolean validateImport(String command) {
 		Pattern patternPathStructure = Pattern.compile(".*\\.kmp");
@@ -436,7 +456,7 @@ public class Console implements Runnable {
 	/**
 	 * Checks if the command is a valid export
 	 * @param command a string written by the user
-	 * @return a boolean if the command is a valid export
+	 * @return if the command is a valid export
 	 */
 	private boolean validateExport(String command) {
 		Pattern patternPathStructure = Pattern.compile(".*\\.kmp");
@@ -449,6 +469,7 @@ public class Console implements Runnable {
 	}
 	
 	/**
+<<<<<<< HEAD
 	 * Checks if the command is a valid language
 	 * @param command a string written by the user
 	 * @return a boolean if the command is a valid language
@@ -469,6 +490,8 @@ public class Console implements Runnable {
 	}
 
 	/**
+=======
+>>>>>>> refs/remotes/origin/develop
 	 * Top level user input handling function.
 	 */
 	private void prompt() {
@@ -610,7 +633,6 @@ public class Console implements Runnable {
 					case IMPORT:
 					case EXPORT:
 					case RESET:
-					case LANGUAGE:
 						illegalCommand();
 						break;
 					case SHOW:
@@ -620,7 +642,7 @@ public class Console implements Runnable {
 						currentMode.helpMessage();
 						break;
 					case BACK:
-						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT || currentMode == Modes.LANGUAGE) {
+						if (currentMode == Modes.INSERT || currentMode == Modes.QUERY || currentMode == Modes.INSPECT_RELATIONS || currentMode == Modes.IMPORT || currentMode == Modes.EXPORT) {
 							this.mode = null;
 							parentMode = null;
 							back = true;
@@ -670,10 +692,6 @@ public class Console implements Runnable {
 					break;
 				case EXPORT:
 					if (validateExport(command))
-						validEntry = true;
-					break;
-				case LANGUAGE:
-					if (validateLanguage(command))
 						validEntry = true;
 					break;
 				default:

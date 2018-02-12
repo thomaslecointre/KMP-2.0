@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
+/**
+ * This class is used to create the architecture files to save the database.
+ */
 public class DatabaseSerializer {
 
 	private Database db;
@@ -103,7 +105,7 @@ public class DatabaseSerializer {
         	Files.createDirectories(Paths.get(databasePath));
         	db.writeObject(databasePath + databaseFileName);
         } else {
-        	System.out.println("Trying to get previous data");
+        	//System.out.println("Trying to get previous data");
         	db = db.readObject(db, databasePath + databaseFileName);
         	System.out.println(db.toString());
         }
@@ -230,7 +232,6 @@ public class DatabaseSerializer {
 	 * @throws IOException
 	 */
 	public void quitCommand() throws IOException {
-		//db.writeObject(databasePath + databaseFileName);
 		deleteTemporaryDatabaseDirectory();
 	}
 }
