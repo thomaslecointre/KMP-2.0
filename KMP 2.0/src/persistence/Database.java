@@ -1,36 +1,53 @@
 package persistence;
 
-import java.util.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Set;
 
 import model.Data;
 import model.Relation;
 import model.Subject;
 
 /**
- * This class is the lowest data layer. It is the only class that should have access to data stored on a machine.
+ * This class is the lowest data layer. It is the only class that should have
+ * access to data stored on a machine.
  */
-public class Database {
+public class Database implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private ArrayList<Data> objects;
 	private HashMap<Integer, EntryData> table;
 	private int primaryIndex = 1;
 
 	/**
 	 * Returns size of table field (HashMap<Integer, EntryData>) as an int.
+	 * 
 	 * @return the size of the table
 	 */
 	public int tableSize() {
 		return table.keySet().size();
 	}
 
-	Database() {
+	public Database() {
 		table = new HashMap<>();
 		objects = new ArrayList<>();
 	}
 
 	/**
 	 * Inserts an instance of EntryData into table as the key is autoincremented.
-	 * @param entryData instance of EntryData
+	 * 
+	 * @param entryData
+	 *            instance of EntryData
 	 */
 	public void insert(EntryData entryData) {
 		table.put(autoIncrementValue(), entryData);
@@ -38,6 +55,7 @@ public class Database {
 
 	/**
 	 * Increments the key (primaryIndex) used in table.
+	 * 
 	 * @return an int corresponding to an incremented primaryKey.
 	 */
 	private int autoIncrementValue() {
@@ -45,10 +63,11 @@ public class Database {
 	}
 
 	/**
-	 * Removes the last entry by destroying the association <Integer, EntryData>. The primaryIndex field is decremented.
+	 * Removes the last entry by destroying the association <Integer, EntryData>.
+	 * The primaryIndex field is decremented.
 	 */
 	public void removeLastEntry() {
-		if(table.containsKey(primaryIndex - 1)) {
+		if (table.containsKey(primaryIndex - 1)) {
 			table.remove(primaryIndex - 1);
 			primaryIndex--;
 		}
@@ -59,19 +78,22 @@ public class Database {
 	 */
 	public void reset() {
 		table.clear();
-		primaryIndex = 0;
+		objects.clear();
+		primaryIndex = 1;
 	}
 
 	/**
-	 * Finds an instance of Subject using an id string.
-	 * An id string is the textual representation of an ID value, which is present in every table entry.
-	 * The function returns null if no table entry is found to having id as its "ID".
-	 * @param id a string used to identify an ID.
+	 * Finds an instance of Subject using an id string. An id string is the textual
+	 * representation of an ID value, which is present in every table entry. The
+	 * function returns null if no table entry is found to having id as its "ID".
+	 * 
+	 * @param id
+	 *            a string used to identify an ID.
 	 * @return an instance of Subject.
 	 */
 	public Subject findSubject(String id) {
-		for(Data data : objects) {
-			if(data.getId().equals(id)) {
+		for (Data data : objects) {
+			if (data.getId().equals(id)) {
 				return (Subject) data;
 			}
 		}
@@ -79,13 +101,16 @@ public class Database {
 	}
 
 	/**
-	 * Similar to Subject findSubject(...), it returns an instance of Relation identified by the id parameter.
-	 * @param id a string used to identify an instance of Relation.
+	 * Similar to Subject findSubject(...), it returns an instance of Relation
+	 * identified by the id parameter.
+	 * 
+	 * @param id
+	 *            a string used to identify an instance of Relation.
 	 * @return an instance of Relation.
 	 */
 	public Relation findRelation(String id) {
-		for(Data data : objects) {
-			if(data.getId().equals(id)) {
+		for (Data data : objects) {
+			if (data.getId().equals(id)) {
 				return (Relation) data;
 			}
 		}
@@ -94,7 +119,9 @@ public class Database {
 
 	/**
 	 * Adds an instance of Subject to the objects field.
-	 * @param newSubject an instance of Subject.
+	 * 
+	 * @param newSubject
+	 *            an instance of Subject.
 	 */
 	public void addSubject(Subject newSubject) {
 		objects.add(newSubject);
@@ -102,15 +129,20 @@ public class Database {
 
 	/**
 	 * Adds an instance of Relation to the objects field.
-	 * @param newRelation an instance of Relation.
+	 * 
+	 * @param newRelation
+	 *            an instance of Relation.
 	 */
 	public void addRelation(Relation newRelation) {
 		objects.add(newRelation);
 	}
 
 	/**
-	 * Returns an instance of EntryData by identifying the EntryData associated with databaseEntryNumber.
-	 * @param databaseEntryNumber a int used to identify a key in table.
+	 * Returns an instance of EntryData by identifying the EntryData associated with
+	 * databaseEntryNumber.
+	 * 
+	 * @param databaseEntryNumber
+	 *            a int used to identify a key in table.
 	 * @return an instance of EntryData.
 	 */
 	public EntryData getEntryData(int databaseEntryNumber) {
@@ -118,40 +150,52 @@ public class Database {
 	}
 
 	/**
-	 * Returns an int representing a key in the database by indentifying the id, an instance of String, in the associated EntryData instance.
-	 * Returns 0 if no key is found.
-	 * @param id a string used to identify the "ID" of an instance of EntryData.
+	 * Returns an int representing a key in the database by indentifying the id, an
+	 * instance of String, in the associated EntryData instance. Returns 0 if no key
+	 * is found.
+	 * 
+	 * @param id
+	 *            a string used to identify the "ID" of an instance of EntryData.
 	 * @return a key as an int.
 	 */
 	public int findKey(String id) {
-		for(Integer key : table.keySet()) {
-			if(table.get(key).getIdAsString().equals(id)) {
+		for (int key : table.keySet()) {
+			if (table.get(key).getIdAsString().equals(id)) {
 				return key;
 			}
 		}
 		return 0;
+	}
+	
+	public int findKey(Subject subject) {
+		return findKey(subject.getId());
 	}
 
 	@Override
 	public String toString() {
 
 		StringBuilder res = new StringBuilder();
-		res.append("\nWhat's in the database?\n");
-		for(Integer key : table.keySet()) {
+		if (objects.size() > 0) {
+			res.append("\nWhat's in the database?\n");
+		} else {
+			return "Nothing is in the database.";
+		}
+		
+		for (Integer key : table.keySet()) {
 			res.append("\nindex => ").append(key).append(" | ");
 			EntryData entryData = table.get(key);
 			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
-			for(Relation relation : entryData.relations()) {
+			for (Relation relation : entryData.getRelations()) {
 				res.append(relation.getId()).append(" => ");
-				HashSet<Subject> subjects = entryData.getSubjects(relation);
-				if(subjects.size() > 1) {
+				ArrayList<Subject> subjects = entryData.getSubjects(relation);
+				if (subjects.size() > 1) {
 					res.append("{ ");
-					for(Subject subject : subjects) {
+					for (Subject subject : subjects) {
 						res.append(subject.getId()).append(' ');
 					}
 					res.append("} | ");
-				} else if(subjects.size() == 1) {
-					res.append(((Subject)subjects.toArray()[0]).getId());
+				} else if (subjects.size() == 1) {
+					res.append(((Subject) subjects.toArray()[0]).getId());
 					res.append(" | ");
 				}
 			}
@@ -159,9 +203,9 @@ public class Database {
 		return res.toString();
 	}
 
-
 	/**
 	 * Returns all the keys in table as a set.
+	 * 
 	 * @return a set of keys.
 	 */
 	public Set<Integer> getAllKeys() {
@@ -170,32 +214,109 @@ public class Database {
 
 	/**
 	 * Returns all instances of EntryData in table as a collection.
+	 * 
 	 * @return a collection of every EntryData instance.
 	 */
 	public Collection<EntryData> getAllEntries() {
-	    return table.values();
+		return table.values();
 	}
 
 	/**
-	 * Traverses the objects field and counts every instance of Relation, returning the result.
+	 * Traverses the objects field and counts every instance of Relation, returning
+	 * the result.
+	 * 
 	 * @return an int representing the number of instances of Relation in objects.
 	 */
-    public int relationCount() {
-	    int counter = 0;
-	    for(Data data : objects) {
-	        if (data instanceof Relation) {
-	            counter++;
-            }
-        }
-        return counter;
-    }
+	public int relationCount() {
+		int counter = 0;
+		for (Data data : objects) {
+			if (data instanceof Relation) {
+				counter++;
+			}
+		}
+		return counter;
+	}
 
 	/**
 	 * Returns a boolean representing the presence of a key in table.
-	 * @param key an int representing a key.
+	 * 
+	 * @param key
+	 *            an int representing a key.
 	 * @return a boolean indicating the presence of a key.
 	 */
 	public boolean testKey(int key) {
-	    return table.keySet().contains(key);
-    }
+		return table.keySet().contains(key);
+	}
+
+	/**
+	 * Gets the primary index of the database
+	 * @return the primary index of the database
+	 */
+	public int getPrimaryIndex() {
+		return primaryIndex;
+	}
+	
+	/**
+	 * Creates a file at the path given in argument containing the database serialized
+	 * @param path the absolute path where the database will be saved
+	 * @throws IOException
+	 */
+	public void writeObject(String path) throws IOException {
+		FileOutputStream fileOut = new FileOutputStream(path);
+		ObjectOutputStream out = new ObjectOutputStream(fileOut);
+		out.writeObject(this);
+		out.close();
+		fileOut.close();
+		//System.out.printf("data serialized in " + path + "\n");
+	}
+
+	/**
+	 * Creates a database from the the file read at the path indicated in argument
+	 * @param db the previous database where the new one will be saved
+	 * @param path the absolute path where the file containing the future database is located
+	 * @return the database contained in the file
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public Database readObject(Database db, String path) throws IOException, ClassNotFoundException {
+		FileInputStream fileIn;
+		try {
+			fileIn = new FileInputStream(path);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			db = (Database) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		//System.out.println("data read from " + path + "\n");
+		return db;
+	}
+
+	public Subject getID(Integer key) {
+		return table.get(key).getID().getSubject();
+	}
+	
+	/**
+	 * Gets all the relations contained in the list of objects
+	 * @return all the relations of objects
+	 */
+	public ArrayList<Relation> getAllRelations() {
+		ArrayList<Relation> relations = new ArrayList<>();
+		for (Data data : objects) {
+			if (data instanceof Relation) {
+				relations.add((Relation) data);
+			}
+		}
+		return relations;
+	}
+
+	/**
+	 * Replaces an entry of table by his key
+	 * @param key the key of the data to be replaced
+	 * @param entryData the new entrydata
+	 */
+	public void replaceEntry(int key, EntryData entryData) {
+		table.put(key, entryData);
+	}
 }

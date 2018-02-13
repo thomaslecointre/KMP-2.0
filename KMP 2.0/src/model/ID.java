@@ -1,10 +1,16 @@
 package model;
 
+import java.io.Serializable;
+
 /**
  * This class is used to represent the id associated with a database entry.
  */
-public class ID {
+public class ID implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Subject subject;
 
 	public ID() {
@@ -23,4 +29,8 @@ public class ID {
 		return subject;
 	}
 
+	@Override
+	public String toString() {
+		return subject.toString();
+	}
 }
