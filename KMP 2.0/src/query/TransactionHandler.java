@@ -11,6 +11,8 @@ import model.Subject;
 import persistence.Database;
 import persistence.DatabaseSerializer;
 import persistence.EntryData;
+import ui.Internationalization;
+import ui.Internationalization.Commands;
 
 /**
  * This class is an intermediary request handling class and communicates with
@@ -450,7 +452,6 @@ public class TransactionHandler {
 				|| totalNumberOfEntries[1] != previousTotalNumberOfEntries[1]);
 	}
 
-	//TODO checks not to put reflexive relation 
 	/**
 	 * Adds the relations transitive
 	 * @param relation the relation that has to be changed
@@ -515,14 +516,15 @@ public class TransactionHandler {
 	 * @param command the input of the user
 	 */
 	public void updateRelation(String command) {
+		Internationalization i = new Internationalization();
 		String[] splittedCommand = command.split(" ");
 		Relation relation = database.findRelation(splittedCommand[0]);
 		String qualifier = splittedCommand[1];
 		String propertyString = splittedCommand[2];
 		Relation.Properties property = Relation.Properties.valueOf(propertyString.toUpperCase());
-		if (qualifier.equals("is")) {
+		if (qualifier.equals(i.getMessage(Commands.IS))) {
 			relation.setProperty(property, true);
-		} else if (qualifier.equals("not")) {
+		} else if (qualifier.equals(i.getMessage(Commands.NOT))) {
 			relation.setProperty(property, false);
 		}
 		applyRelationProperties(relation);
@@ -533,14 +535,15 @@ public class TransactionHandler {
 	 * @return the string composed of the relations and the properties
 	 */
 	public String showRelations() {
+		Internationalization i = new Internationalization();
 		ArrayList<Relation> relations = database.getAllRelations();
 		StringBuilder res = new StringBuilder();
-		res.append("\nRelations : ");
+		res.append(i.getMessage(Commands.TRANSACTION_HANDLER_RELATIONS));
 		for (Relation relation : relations) {
 			EnumMap<Relation.Properties, Boolean> properties = relation.getProperties();
 			res.append("\n\t").append(relation).append(" : ").append(properties);
 		}
-		res.append("\nProperties : ");
+		res.append(i.getMessage(Commands.TRANSACTION_HANDLER_PROPERTIES));
 		for (Relation.Properties property : Relation.Properties.values()) {
 			res.append("\n\t").append(property.toString().toLowerCase());
 		}

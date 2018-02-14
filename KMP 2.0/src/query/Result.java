@@ -5,6 +5,8 @@ import java.util.HashMap;
 
 import model.Data;
 import persistence.Database;
+import ui.Internationalization;
+import ui.Internationalization.Commands;
 /**
  * This class is the closest to the user. It interacts with TransactionHandler for requests.
  */
@@ -44,7 +46,7 @@ public class Result {
 	public String toString() {
 		
 		StringBuilder res = new StringBuilder();
-		
+		Internationalization i = new Internationalization();
 		for (String identifier : selectorMappings.keySet()) {
 			
 			res.append("\n\n").append(identifier);
@@ -57,17 +59,17 @@ public class Result {
 			for (Data data : datafield) {
 				if (selectorTypes.get(identifier).equals(Context.DataTypes.SUBJECT)) {
 					if (!alreadyFound.contains(data) && !associatedView) {
-						res.append("\n\t").append("Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+						res.append("\n\t").append(i.getMessage(Commands.RESULT_KEY)).append(database.findKey(data.getId())).append(" => ").append(data);
 						alreadyFound.add(data);
 					} else if (associatedView) {
-						res.append("\n\t").append(index).append(") Key : ").append(database.findKey(data.getId())).append(" => ").append(data);
+						res.append("\n\t").append(index).append(") " + i.getMessage(Commands.RESULT_KEY)).append(database.findKey(data.getId())).append(" => ").append(data);
 					}
 				} else if (selectorTypes.get(identifier).equals(Context.DataTypes.RELATION)) {
 					if (!alreadyFound.contains(data) && !associatedView) {
-						res.append("\n\t").append("Relation : ").append(data);
+						res.append("\n\t").append(i.getMessage(Commands.RESULT_RELATION)).append(data);
 						alreadyFound.add(data);
 					} else if (associatedView) {
-						res.append("\n\t").append(index).append(") Relation : ").append(data);
+						res.append("\n\t").append(index).append(") " + i.getMessage(Commands.RESULT_RELATION)).append(data);
 					}
 				}
 				index++;

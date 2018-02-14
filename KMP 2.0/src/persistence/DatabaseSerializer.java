@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import ui.Internationalization;
+import ui.Internationalization.Commands;
 /**
  * This class is used to create the architecture files to save the database.
  */
@@ -90,8 +93,10 @@ public class DatabaseSerializer {
 	 * Checks that the numberTemporaryDatabase is positive and decrement it
 	 */
 	public void decrementNumberTemporaryDatabase() {
-		if (numberTemporaryDatabase < 1) System.out.println("No anterior temporary file !");
-		else numberTemporaryDatabase--;
+		if (numberTemporaryDatabase < 1) {
+			Internationalization i = new Internationalization();
+			System.out.println(i.getMessage(Commands.UNDO_EXCEPTION));
+		} else numberTemporaryDatabase--;
 	}
 	
 	/**
@@ -105,7 +110,8 @@ public class DatabaseSerializer {
         	Files.createDirectories(Paths.get(databasePath));
         	db.writeObject(databasePath + databaseFileName);
         } else {
-        	//System.out.println("Trying to get previous data");
+        	//Internationalization i = new Internationalization();
+        	//System.out.println(i.getMessage(Commands.LOADING_PREVIOUS_STATE));
         	db = db.readObject(db, databasePath + databaseFileName);
         	System.out.println(db.toString());
         }
@@ -179,9 +185,10 @@ public class DatabaseSerializer {
 	 * @throws IOException
 	 */
 	public Database importCommand(String path) throws ClassNotFoundException, IOException {
-		if (!Files.exists(Paths.get(path)))
-			System.out.println("File doesn't exist !");
-		else {
+		if (!Files.exists(Paths.get(path))) {
+			Internationalization i = new Internationalization();
+			System.out.println(i.getMessage(Commands.FILE_NOT_FOUND));
+		} else {
 			db = db.readObject(db, path);
 			db.writeObject(databasePath + databaseFileName);
 			db.writeObject(databasePath + getTemporaryFileName());
@@ -200,7 +207,8 @@ public class DatabaseSerializer {
         	Files.createDirectories(Paths.get(path));
         }
     	db.writeObject(path);
-    	System.out.println("Export succeeded");
+    	Internationalization i = new Internationalization();
+    	System.out.println(i.getMessage(Commands.EXPORT_SUCCEEDED));
 	}
 
 	/**

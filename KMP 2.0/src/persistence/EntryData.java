@@ -9,6 +9,8 @@ import java.util.Set;
 import model.ID;
 import model.Relation;
 import model.Subject;
+import ui.Internationalization;
+import ui.Internationalization.Commands;
 
 /**
  * This class is used to store in the form of a map between Relation objects and
@@ -108,7 +110,8 @@ public class EntryData implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder res = new StringBuilder();
-		res.append("id => ").append(this.getIdAsString()).append(" | ");
+		Internationalization i = new Internationalization();
+		res.append(i.getMessage(Commands.ENTRYDATA_ID)).append(this.getIdAsString()).append(" | ");
 		for (Relation relation : this.getRelations()) {
 			res.append(relation.getId()).append(" => ");
 			ArrayList<Subject> subjects = this.getSubjects(relation);

@@ -14,6 +14,8 @@ import java.util.Set;
 import model.Data;
 import model.Relation;
 import model.Subject;
+import ui.Internationalization;
+import ui.Internationalization.Commands;
 
 /**
  * This class is the lowest data layer. It is the only class that should have
@@ -175,16 +177,17 @@ public class Database implements Serializable {
 	public String toString() {
 
 		StringBuilder res = new StringBuilder();
+		Internationalization i = new Internationalization();
 		if (objects.size() > 0) {
-			res.append("\nWhat's in the database?\n");
+			res.append(i.getMessage(Commands.DATABASE_QUESTION));
 		} else {
-			return "Nothing is in the database.";
+			return i.getMessage(Commands.DATABASE_EMPTY);
 		}
 		
 		for (Integer key : table.keySet()) {
-			res.append("\nindex => ").append(key).append(" | ");
+			res.append(i.getMessage(Commands.DATABASE_INDEX)).append(key).append(" | ");
 			EntryData entryData = table.get(key);
-			res.append("id => ").append(entryData.getIdAsString()).append(" | ");
+			res.append(i.getMessage(Commands.DATABASE_ID)).append(entryData.getIdAsString()).append(" | ");
 			for (Relation relation : entryData.getRelations()) {
 				res.append(relation.getId()).append(" => ");
 				ArrayList<Subject> subjects = entryData.getSubjects(relation);
@@ -267,7 +270,7 @@ public class Database implements Serializable {
 		out.writeObject(this);
 		out.close();
 		fileOut.close();
-		//System.out.printf("data serialized in " + path + "\n");
+		//System.out.printf(i.getMessage(Commands.DATABASE_SERIALIZED) + path + "\n");
 	}
 
 	/**
@@ -289,7 +292,7 @@ public class Database implements Serializable {
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		//System.out.println("data read from " + path + "\n");
+		//System.out.println(i.getMessage(Commands.DATABASE_READ) + path + "\n");
 		return db;
 	}
 

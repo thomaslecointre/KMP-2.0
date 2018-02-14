@@ -30,8 +30,8 @@ public class Console implements Runnable {
 		INSERT, QUERY, INSPECT_RELATIONS, UNDO, REDO, IMPORT, EXPORT, RESET, SHOW, HELP, LANGUAGE, BACK, QUIT;
 		private static Internationalization internationalization = new Internationalization();
 		
-		String commandName(Modes mode) {
-			switch (mode) {
+		String commandName() {
+			switch (this) {
 			case INSERT:
 				return internationalization.getMessage(Commands.INSERT);
 			case INSPECT_RELATIONS:
@@ -74,7 +74,7 @@ public class Console implements Runnable {
 				System.out.println(internationalization.getMessage(Commands.INSPECT_RELATIONS_TEXT));
 				break;
 			case HELP:
-				// listOfCommands();
+				//listOfCommands();
 				break;
 			case BACK:
 				System.out.println(internationalization.getMessage(Commands.BACK_TEXT));
@@ -96,6 +96,7 @@ public class Console implements Runnable {
 				break;
 			case LANGUAGE:
 				System.out.println(internationalization.getMessage(Commands.LANGUAGE_TEXT));
+				System.out.println(internationalization.getMessage(Commands.LANGUAGE_CHOOSE) + internationalization.getAllLanguages());
 				break;
 			case QUIT:
 				System.out.println(internationalization.getMessage(Commands.QUIT_TEXT));
@@ -117,7 +118,7 @@ public class Console implements Runnable {
 	 * Sets prompt message.
 	 */
 	private void setPromptMessage(Modes mode) {
-		promptMessage = "\n" + mode.commandName(mode) + " > ";
+		promptMessage = "\n" + mode.commandName() + " > ";
 	}
 	
 	/**
@@ -150,7 +151,7 @@ public class Console implements Runnable {
 	 */
 	private boolean modeChanged(String command) {
 		for (Modes mode : Modes.values()) {
-			if (command.contains(mode.commandName(mode))) {
+			if (command.contains(mode.commandName())) {
 				if(mode == Modes.BACK) {
 					return false;
 				}
@@ -210,7 +211,7 @@ public class Console implements Runnable {
 	private static void listOfCommands() {
 		System.out.println(internationalization.getMessage(Commands.SHOW_TEXT));
 		for (Modes mode : Modes.values()) {
-			System.out.println(mode.commandName(mode));
+			System.out.println(mode.commandName());
 		}
 		System.out.println(internationalization.getMessage(Commands.BACK_COMMAND));
 	}
@@ -252,7 +253,7 @@ public class Console implements Runnable {
 	 * @return if 'is' or 'not' is present in the string
 	 */
 	private boolean isKeyWordRelationIsNot(String s) {
-		String keywords = "is|not";
+		String keywords = internationalization.getMessage(Commands.IS) + "|" + internationalization.getMessage(Commands.NOT);
 		
 		Pattern pattern = Pattern.compile(keywords.toString(), Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(s);
@@ -617,7 +618,7 @@ public class Console implements Runnable {
 			modeDetected = false;
 			back = false;
 			for (Modes mode : Modes.values()) {
-				if (command.contains(mode.commandName(mode))) {
+				if (command.contains(mode.commandName())) {
 					switch (mode) {
 					case INSERT:
 					case QUERY:
