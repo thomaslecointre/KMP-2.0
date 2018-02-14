@@ -74,7 +74,7 @@ public class Console implements Runnable {
 				System.out.println(internationalization.getMessage(Commands.INSPECT_RELATIONS_TEXT));
 				break;
 			case HELP:
-				listOfCommands();
+				// listOfCommands();
 				break;
 			case BACK:
 				System.out.println(internationalization.getMessage(Commands.BACK_TEXT));

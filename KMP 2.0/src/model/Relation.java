@@ -51,4 +51,8 @@ public class Relation extends Data implements Serializable {
 	public boolean isPropertyActive(Properties property) {
 		return properties.get(property);
 	}
+	
+	public EnumMap<Properties, Boolean> getProperties() {
+		return properties;
+	}
 }

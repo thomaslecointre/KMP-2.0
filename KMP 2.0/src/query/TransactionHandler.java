@@ -3,6 +3,7 @@ package query;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 
 import model.Data;
 import model.Relation;
@@ -377,6 +378,7 @@ public class TransactionHandler {
 		
 		relation.setProperty(Relation.Properties.SYMMETRIC, false);
 		relation.setProperty(Relation.Properties.ANTISYMMETRIC, true); // An asymmetric relation is antisymmetric by default
+		relation.setProperty(Relation.Properties.IRREFLEXIVE, true);
 		
 		int[] totalNumberOfEntries = new int[] { 0, 0 };
 		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
@@ -456,6 +458,14 @@ public class TransactionHandler {
 	private void applyTransitivity(Relation relation) {
 		int[] totalNumberOfEntries = new int[] { 0, 0 };
 		int[] previousTotalNumberOfEntries = new int[] { Integer.MIN_VALUE, Integer.MIN_VALUE };
+		
+		if (relation.isPropertyActive(Relation.Properties.ASYMMETRIC)) {
+			relation.setProperty(Relation.Properties.IRREFLEXIVE, true);
+		}
+		if (relation.isPropertyActive(Relation.Properties.IRREFLEXIVE)) {
+			relation.setProperty(Relation.Properties.ASYMMETRIC, true);
+		}
+		
 		String query = "?X, ?Z : ?X " + relation + " ?Y & ?Y " + relation + " ?Z";
 		do {
 			previousTotalNumberOfEntries = Arrays.copyOf(totalNumberOfEntries, totalNumberOfEntries.length);
@@ -527,7 +537,8 @@ public class TransactionHandler {
 		StringBuilder res = new StringBuilder();
 		res.append("\nRelations : ");
 		for (Relation relation : relations) {
-			res.append("\n\t").append(relation);
+			EnumMap<Relation.Properties, Boolean> properties = relation.getProperties();
+			res.append("\n\t").append(relation).append(" : ").append(properties);
 		}
 		res.append("\nProperties : ");
 		for (Relation.Properties property : Relation.Properties.values()) {
